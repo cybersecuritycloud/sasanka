@@ -1,15 +1,12 @@
 package = "ssk-detecthandling"
 version = "0.2.0-1"
 source = {
-	url = "https://github.com/cybersecuritycloud/sasanka-proto.git"
+	url = "https://github.com/cybersecuritycloud/sasanka.git"
 }
 description = {
    summary = "Kong plugins for API security developed by CyberSecurityCloud",
    homepage = "https:///www.cscloud.co.jp/",
    license = "Apache2.0"
-}
-dependencies = {
-   "lua ~> 5.3"
 }
 build = {
    type = "builtin",
