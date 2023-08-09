@@ -1,15 +1,16 @@
 local common = require "kong.plugins.ssk-core.common"
 local util = require "kong.plugins.ssk-core.lib.utils"
 
-local function get_body()
+local function bodyparam_cb( bodyparam )
+	local params = require "kong.plugins.ssk-core.params"
+	local err = params.detect_param_main( "param_req_body", bodyparam )
+	if err then return err end
+end
+
+local function get_body_by_memory()
 	-- CAUTION : DO NOT CALL get_raw_body several time!
-	-- TODO : find other way to check body end
-	local body = kong.request.get_raw_body()
-	if body == nil then  
-		--kong.log.debug("reqbody not ended")
-		return nil, "more"
-	end 
-	return body, "done"
+	-- NOTE : In kong, phase_access will called once.
+	return kong.request.get_raw_body()
 end
 
 
@@ -33,9 +34,20 @@ local function detect_request( handlers, req_params )
 		if err then return err end
 	end
 	if util.get_safe(handlers, "param_req_body") then
-		local err = params.detect_param_main( "param_req_body", req_params.bodyparam )	
-		if err then return err end
+		if kong.ctx.shared.cap.body_in_file then
+			local parsers = util.get_safe_d({}, kong.ctx.shared.cap.handlers, "parse_req_body" )
+			for i = 1, #parsers do
+				local handler_info = parsers[i]
+				local err = handler_info.h( "param_req_body", bodyparam_cb, unpack(handler_info.args) )
+				if err then return err end
+			end
+		else
+			local err = params.detect_param_main( "param_req_body", req_params.bodyparam )	
+			if err then return err end	
+		end
 	end
+
+
 	return nil
 end
 
@@ -54,6 +66,7 @@ local function decode( dict )
 	end
 	return dict
 end
+
 local function phase_access( handlers )
 	if not kong.ctx.shared.cap.req_params then kong.ctx.shared.cap.req_params = {} end
 	local params = kong.ctx.shared.cap.req_params
@@ -78,23 +91,21 @@ local function phase_access( handlers )
 
 	if not util.get_safe(params, "bodyparam") and
 		util.get_safe(handlers, "param_req_body") then
-		-- 1.1 check body end
-		local body, err = get_body()
-		if body == nil then
-			if err == "cl" then
-				return false
-			elseif err == "more" then
-				return false
-			end
-		end
+		params["bodyparam"] = {}
 
-		-- 2. set parameters
-		local body_param, reqbody_err, reqbody_mimetype = nil, nil, nil
+		-- NOTE: In Kong, access phase will be called end of request body
+		-- if body is nil, it means need to read file
+		-- if body is "", it means no body
+		local body = get_body_by_memory()
 		if body ~= nil then
+			-- by memory
+			-- use native kong parser
+			local body_param, reqbody_err, reqbody_mimetype = nil, nil, nil
 			body_param, reqbody_err, reqbody_mimetype = kong.request.get_body()
+			params["bodyparam"] = body_param
+		else
+			kong.ctx.shared.cap.body_in_file = true
 		end
-	
-		params["bodyparam"] = body_param
 	end
 	
 	if not util.get_safe(params, "header")  and

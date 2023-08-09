@@ -2,7 +2,10 @@ local core = require "kong.plugins.ssk-core.core"
 local util = require "kong.plugins.ssk-core.lib.utils"
 local pm = require "kong.plugins.ssk-pm.patternmatcher"
 
-local RULE_ID_PATTERNMATCH_BASE = 10
+local RULE_ID_LIBINJECTION_BASE = 60
+local RULE_ID_LIBINJECTION_SQL = 61
+local RULE_ID_LIBINJECTION_XSS = 62
+
 
 local function make_dict_by_in( params )
 	local ret  = {}
@@ -17,25 +20,16 @@ local function make_dict_by_in( params )
 			table.insert( ret[cat], params[i] )
 		end
 	end
+
 	return ret
 end
+
 
 local function initialize()
 	local config = kong.ctx.plugin.config
 
-	if config["ud_list"] then return end
-
-	config["params_in"] = make_dict_by_in( config["params"] )
-	config["ud_list"] = {}	
-
-	if kong.ctx.shared.cap.patterns then
-		config["ud_list"] = kong.ctx.shared.cap.patterns
-	elseif config["patterns"] then
-		for i = 1, #config["patterns"] do
-			local opt = 10
-			local cache_key = config["patterns"][i]["name"]
-			config["ud_list"][cache_key] = pm.optimize( config["patterns"][i]["patterns"], opt )
-		end
+	if not config["params_in"] then
+		config["params_in"] = make_dict_by_in( config["params"] )
 	end
 end
 
@@ -47,22 +41,31 @@ local function check_same( p1, p2 )
 	return false
 end
 
-local function run_match( subj, patterns, keys)
-	for i = 1, #keys do
-		local ud = util.get_safe( patterns, keys[i])
-		if ud then 
-			local a, b = pm.detect_tbl(tostring(subj), ud)
-			if a then
-				return {rule_id = RULE_ID_PATTERNMATCH_BASE,  args = { keys[i], nil, subj, subj:sub(a,b) } }
-			end
+local function run_match( subj, param_config )
+	local libinjection = require "kong.plugins.ssk-libinjection.libinjection"
+	
+	if param_config.sql then
+		local d, fingerprint = libinjection.sqli(subj)
+		if d then
+			return { rule_id = RULE_ID_LIBINJECTION_SQL, args = { subj, fingerprint } }
 		end
 	end
+
+	if param_config.xss then
+		local d, fingerprint = libinjection.xss(subj)
+		if d then
+			return { rule_id = RULE_ID_LIBINJECTION_XSS, args = { subj, fingerprint } }
+		end
+	end
+	
+	return nil	
 end
 
-local function h(cat, k, v, params, ud_list, ...)
+local function h(cat, k, v, params, ...)
+	if type(v) ~= "string" then return end
 	for i = 1, #params do
 		if check_same( k, params[i]["key"] ) then
-			local e = run_match( v, ud_list, params[i]["patterns"])
+			local e = run_match( v, params[i] )
 			if e then 
 				e.args[2] = k 
 				return e
@@ -75,8 +78,9 @@ end
 local _M = core:extend()
 function _M:init_handler( config )
 	initialize()
+
 	for cat, params in pairs( config["params_in"] ) do
-		self:add_param_handler( cat, config, h, params, config["ud_list"] )
+		self:add_param_handler( cat, config, h, params )
 	end
 end
 

@@ -3,12 +3,17 @@ local util = require "kong.plugins.ssk-core.lib.utils"
 
 local function h( detect_info, config )
 	-- Do not try to exit on phase RES 
-	-- TODO GET status
+	-- 512 == header_filter
+	-- 1024 == body_filter
 
+	if ngx.ctx.KONG_PHASE >= 1024 then
+		return
+	end
+	
 	local ondetect_status = util.get_safe_d( 400, config, "status" )
 	local ondetect_headers = util.get_safe_d( {}, config, "headers_tbl" )
 	local ondetect_body = util.get_safe_d( "", config, "body" )
-
+	
 	return ondetect_status, ondetect_body, ondetect_headers
 end
 
@@ -26,7 +31,7 @@ end
 
 local _M = core:extend()
 
-_M.PRIORITY = 100 + 1
+_M.PRIORITY = 100 + 2
 
 function _M:init_handler( config )
 	optimize(config)

@@ -212,14 +212,7 @@ end
 function _M:body_filter(config)
 	if not self:preprocess( config ) then return end
 
-	local cont, err = response.phase_body() 
-	if err then
-		local blocked = common.on_detect( err )
-		if blocked then return end
-	end
-	if not cont then return end
-
-	return response.run_body_handler()
+	return response.phase_body() 
 end
 
 -- last time of transaction

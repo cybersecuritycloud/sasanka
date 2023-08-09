@@ -36,16 +36,13 @@ local function build( p )
 end
 
 local function match( subj, p, from, cf)
-	io.stdout:write("match function")
 	if mode == MODE_PCRE2 then
 		local rp = require ('rex_pcre2')
 		local from, to = rp.find (subj, p, from, cf )
 		return from, to
 	else
-		local ngx_re = require "ngx.re"
 		local from, to, err = ngx.re.find( subj, p, "jo" )
 		if err then kong.log.error( err ) end
-		io.stdout:write("ngx.re result" .. from, to)
 		return from, to
 	end
 end

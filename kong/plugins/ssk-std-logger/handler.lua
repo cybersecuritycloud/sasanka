@@ -35,7 +35,8 @@ local function inspect( t )
 end
 
 local function h( detect_info, config )
-	config.handler( detect_info )
+	local header = util.get_safe_d( "", config, "header" )
+	config.handler( header, detect_info )
 	return
 end
 
@@ -44,20 +45,24 @@ local function init( config )
 	if not config.inited then
 		config.inited = true
 		if config.std == "out" then
-			config.handler = function (detect_info)
-				io.stdout:write(inspect(detect_info) .. "\n" )
+			config.handler = function ( header, detect_info)
+				if not detect_info.silence then
+					io.stdout:write( header .. inspect(detect_info) .. "\n" )
+				end
 			end
 		end
 		if config.std == "err" then
-			config.handler = function (detect_info)
-				io.stderr:write(inspect(detect_info) .. "\n")
+			config.handler = function ( header, detect_info)
+				if not detect_info.silence then
+					io.stderr:write( header ..  inspect(detect_info) .. "\n")
+				end
 			end
 		end
 	end
 end
 
 local _M = core:extend()
-_M.PRIORITY = 100 + 1
+_M.PRIORITY = 100 + 2
 
 function _M:init_handler( config )
 	init( config )
