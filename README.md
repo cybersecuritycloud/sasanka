@@ -1,10 +1,10 @@
-# README(OSS publish)
+# README
 
 # Overview
 
 Kong plugins to add WAF functionality to the Gateway to further improve the security of Kong Gateway.
 
-Five plugins are provided as OSS, and users can choose to add the necessary functions.
+Some plugins are provided as OSS, and users can choose to add the necessary functions.
 
 ---
 
@@ -22,7 +22,7 @@ Five plugins are provided as OSS, and users can choose to add the necessary func
 | ssk-clickjacking | Prevent Clickjacking | Prevent clicjacking attack. |
 | ssk-saferedirect | Strict Redirection | Strict host to redirect by whitelist. |
 | ssk-strictparameter | Strict and Validate Parameters | Validating params like JSON Schema and it can also restrict value to prevent MassAssignment for example. |
-| ssk-telemetry | Output Telemetry |  |
+| ssk-telemetry | Output Telemetry | Output telemetry to stdout or stderr. Telemetry means metrics of latency, count |
 
 These plugins are **not compatible** with DB-less mode.
 
@@ -79,6 +79,8 @@ And add your `kong.conf` ’s plugins item you want like following example.
 plugins = bundled,ssk-detecthandling,ssk-safehost,ssk-pm,ssk-cors,ssk-std-logger,ssk-ua-filter,ssk-optimizer,ssk-libinjection,ssk-saferedirect,ssk-clickjacking,ssk-strictparameter,ssk-response-transform,ssk-telemetry
 ```
 
+If you can’t install plugins well by above, you can copy source code to kong’s directory.
+
 ---
 
 # Usage
@@ -129,7 +131,7 @@ Enable on Service Example
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d "name=ssk-safehost" \
-    -d "config.host_check=a.com"
+    -d "config.host_check=https://a.com"
 ```
 
 | key | type | description | required | default value |
@@ -234,7 +236,7 @@ The detection logs output from ssk-std-logger are managed by the following rule 
 
 ### ssk-ua-filter
 
-Manage User-Agent to block.
+Manage User-Agent to block. And it can block the request which don’t have User-Agent’s key or not empty value.
 
 Enable on Service Example
 
@@ -252,7 +254,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
-| config.block_useragents | array | Array of User-Agent to block.
+| config.block_useragents | array of string | Array of User-Agent to block.
 The function searches for the first match | - |  |
 | config.block_no_useragent | bool | Block if User-Agent is not set. | - | false |
 
@@ -260,7 +262,7 @@ The function searches for the first match | - |  |
 
 Detect using libinjection.
 
-What is libinjection? Libinjection is the library to detect SQLinjection. To detect SQLinjection, parsing SQL syntax and detect iregular pattern instead of regular expression. Comparing with way to detect between regular expression and libinjection, libinjection can detect faster and correctly.And different from regex,generally libinjection cause misdetection lesss because it understand SQL syntax.
+What is libinjection? Libinjection is the library to detect SQLinjection. To detect SQLinjection, parsing SQL syntax and detect regular pattern instead of regular expression. Comparing with way to detect between regular expression and libinjection, libinjection can detect faster and correctly.And different from regex, generally libinjection cause miss detection less because it understand SQL syntax.
 
 You should execute install script to install required package for libinjection.
 
@@ -295,7 +297,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 Prevent Clickjacking.
 
-Clickjacking is an WEB attack in which a user is tricked into fake linke, fake button.
+Clickjacking is an WEB attack in which a user is tricked into fake link, fake button.
 
 Enable on Service Example
 
@@ -363,11 +365,11 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | --- | --- | --- | --- | --- |
 | config.params[].in | string | Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_body”, ].Select one of them | true |  |
 | config.params[].key | string | Define the parameter key to apply detection. | true |  |
-| config.params[].type | string | Host to match prefix allow redirect. | true |  |
+| config.params[].type | string | Select one of following. boolean, integer, number, date, date-time, string, uuid, regex. | true |  |
 | config.params[].required | bool | Is this key always required. | - | false |
-| config.params[].pattern | string | Enable if type is regex. Set regex pattern. | - |  |
-| config.params[].min | int | If type is int or float, numeric value minimum.Otherwise minimum length as string. | - |  |
-| config.params[].max | int | If type is int or float, numeric value maximum.Otherwise maxmum length as string. | - |  |
+| config.params[].pattern | string | Enable if only type is regex. Set regex pattern. | - |  |
+| config.params[].min | int | If type is integer or number, numeric value minimum.Otherwise minimum length as string. | - |  |
+| config.params[].max | int | If type is integer or number, numeric value maximum.Otherwise maxmum length as string. | - |  |
 
 ### ssk-telemetry
 
@@ -384,17 +386,17 @@ curl -i -X POST http://localhost:8001/plugins \
 				"name": "ssk-telemetry",
 				"config": {
 					"std": "out",
-					"tag": ,
-					"header": 
+					"tag": "your-tag",
+					"header": "[your-header]"
 				}
 		}'
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
-| config.std | string |  | true | “out” |
-| config.tag | string |  | - |  |
-| config.header | string |  | - |  |
+| config.std | string | You can select the place to output either out or err. | true | “out” |
+| config.tag | string | The tag for example if you want to divide the data in endpoint. | - |  |
+| config.header | string | The header of output telemetry. For example, you can pick up telemetry using fluentd by specify this header easily. | - |  |
 
 ---
 
@@ -438,7 +440,3 @@ CyberSecurityCloud.Inc
    See the License for the specific language governing permissions and
    limitations under the License.
 ```
-
-[README.ja](https://www.notion.so/README-ja-5b15fb8e8b3a42bda74556c1f59ddb1e?pvs=21)
-
-[OSS LICENSE](https://www.notion.so/OSS-LICENSE-b8af4f8cfdca480fb2edb97aaff151f9?pvs=21)
