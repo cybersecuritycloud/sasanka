@@ -10,18 +10,6 @@ if test ${#SERVICENAME} -eq 0 ; then
     echo "input YOUR_SERVICE_NAME_OR_ID in arg1"
 fi
 
-# luarocks install
-
-# 
-
-# config module
-echo -e "\n\nConfigure ssk-detecthandling\n"
-curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
-    -H "Content-Type: application/json"\
-	-d '{"name": "ssk-detecthandling", 
-    "config": {"headers": [{"key": "x-gateway", "value": "sasanka-kong-gateway"}], 
-    "status": 441, 
-    "body": "detected by sasanka"}}'
 
 # config module
 echo -e "\n\nConfigure ssk-pm\n"
@@ -31,9 +19,10 @@ curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
 
 
 # config module
-echo -e "\n\nConfigure ssk-safehost\n"
-curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
-    -d "name=ssk-safehost"
+# You should set manually your host(FQDN) on ssk-safehost.
+# echo -e "\n\nConfigure ssk-safehost\n"
+# curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
+#     -d "name=ssk-safehost"
 
 
 # config module
@@ -44,7 +33,7 @@ curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
 		"config": {"block": true, 
 		"modify_response_header": true, 
 		"allow_origins": ["*"],
-		"allow_methods": ["POST", "GET", "PUT"],
+		"allow_methods": ["*"],
 		"allow_headers": ["*"],
 		"expose_headers": ["*"],
 		"allow_credentials": false,
@@ -53,10 +42,53 @@ curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
 
 
 # config module
+echo -e "\n\nConfigure ssk-detecthandling\n"
+curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
+    -H "Content-Type: application/json" \
+	-d '{"name": "ssk-detecthandling", 
+    "config": {"headers": [{"key": "x-gateway", "value": "sasanka-kong-gateway"}], 
+    "status": 441, 
+    "body": "detected "}}'
+
+
+# config module
+# you can check the detected log in error.log
 echo -e "\n\nConfigure ssk-std-logger\n"
 curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
-    -d "name=ssk-std-logger"
+    -d "name=ssk-std-logger" \
     -d "config.std=err"
+
+
+# config module
+echo -e "\n\nConfigure ssk-ua-filter\n"
+curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
+    -d "name=ssk-ua-filter" \
+    -d "config.block_no_useragent=true"
+
+
+# config module
+echo -e "\n\nConfigure ssk-libinjection\n"
+curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
+    -H "Content-Type: application/json" \
+    -d '{"name": "ssk-libinjection", "config": { "params" : [{"in": "param_req_body"}] } }'
+
+
+# config module
+echo -e "\n\nConfigure ssk-click-jacking\n"
+curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
+    -d "name=ssk-clickjacking" \
+    -d "config.policy=DENY"
+
+
+# config module
+# You should set config of ssk-strictparameter manually.
+# echo -e "\n\nConfigure ssk-strictparameter\n"
+# curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
+#     -H "Content-Type: application/json" \
+#     -d '{"name": "ssk-strictparameter", "config": { "params" : [{"in": "param_req_body", "key": "", "type": "", "min": 0, "max": 18}] } }'
+
+
+# config module
 
 
 
