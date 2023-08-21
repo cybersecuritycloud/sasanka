@@ -402,16 +402,26 @@ curl -i -X POST http://localhost:8001/plugins \
 
 # Quick Start
 
-### requirements
+### Requirements
 
 - Kong
     - Need to `kong restart` after adding selected plugin to plugins in kong.conf
+- curl
 - python3 (>=3.6)
 - Core-Rule-Set (automated Install in quickstart.sh)
 
+### Usage
 ```bash
 ./quickstart.sh YOUR_SERVICE_NAME_OR_ID
 ```
+### Description
+This script is to start sasanka for default-settings quickly. The default-setting is recommended by developer. And it contains builder of OWASP Core-Rule-Set, then after building it will be set to our plugin. 
+
+Mention! 
+
+This quickstart targets to start quickly and not target to use ever. So, if misdetection is caused by it, you have to review and modify plugin’s config. 
+
+And it doesn’t contain to start following plugins, `ssk-safehost` , `ssk-strictparameter` , `ssk-telemetry`. Because these must be set by yourself due to important content,  complexing field or unknown it’s necessary for you.
 
 ---
 

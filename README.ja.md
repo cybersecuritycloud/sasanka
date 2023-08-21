@@ -388,11 +388,15 @@ curl -i -X POST http://localhost:8001/plugins \
 
 - Kong
     - `ssk-detecthandling,ssk-safehost,ssk-pm,ssk-cors,ssk-std-logger` をkong.confに追加してから `kong restart` を行う必要があります。
+- curl
 - python3 (>=3.6)
-
+### Usage
 ```bash
 ./quickstart.sh YOUR_SERVICE_NAME_OR_ID
 ```
+### Description
+このquickstartはsasankaをdefault-settingで、即座に利用するためのものです。
+quickstartの設定をそのまま使い続けることは推奨されていません。誤検知が発生した場合には自身で設定を見直し、変更する必要があります。
 
 ---
 
