@@ -1,2 +1,3 @@
 /coreruleset-*/
 *.gz
+/tools/crs_patterns.*

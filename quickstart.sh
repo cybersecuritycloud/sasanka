@@ -28,18 +28,15 @@ curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
 # config module
 echo -e "\n\nConfigure ssk-cors\n"
 curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
-     -d "name=ssk-cors" \
-    -d '{"name": "ssk-cors", 
-		"config": {"block": true, 
-		"modify_response_header": true, 
-		"allow_origins": ["*"],
-		"allow_methods": ["*"],
-		"allow_headers": ["*"],
-		"expose_headers": ["*"],
-		"allow_credentials": false,
-		"max_age": 3600}
-		}'
-
+	-d name=ssk-cors \
+	-d config.block=false \
+	-d config.modify_response_header=true \
+	-d config.allow_origins=["*"] \
+	-d config.allow_methods=["*"] \
+	-d config.allow_headers=["*"] \
+	-d config.expose_headers=["*"] \
+	-d config.allow_credentials=false \
+	-d config.max_age=3600
 
 # config module
 echo -e "\n\nConfigure ssk-detecthandling\n"
@@ -67,10 +64,11 @@ curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
 
 
 # config module
-echo -e "\n\nConfigure ssk-libinjection\n"
-curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
-    -H "Content-Type: application/json" \
-    -d '{"name": "ssk-libinjection", "config": { "params" : [{"in": "param_req_body"}] } }'
+# ./install_libinjection.sh
+# echo -e "\n\nConfigure ssk-libinjection\n"
+# curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
+#     -H "Content-Type: application/json" \
+#     -d '{"name": "ssk-libinjection", "config": { "params" : [{"in": "param_req_body"}] } }'
 
 
 # config module

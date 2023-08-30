@@ -183,9 +183,13 @@ def set_safehost_default_settings():
     port = parsed["port"]
     if port not in ["80"]:
         tgt_host = tgt_host+":"+str(port)
-    
+    tgt_host = parsed['protocol'] + "://" + tgt_host
     config = {"host_check": tgt_host} 
-    put_config("ssk-safehost", config)
+    plugin_id = get_plugin_id("ssk-safehost")
+    if plugin_id is not None:
+        put_config("ssk-safehost", config)
+    else:
+        print("ssk-safehost is not configured.You have to set manuallly.")
 
     return
 
