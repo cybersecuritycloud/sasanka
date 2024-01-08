@@ -537,7 +537,6 @@ CyberSecurityCloud.Inc
    See the License for the specific language governing permissions and
    limitations under the License.
 ```
+---
 
-[README.ja](https://www.notion.so/README-ja-5b15fb8e8b3a42bda74556c1f59ddb1e?pvs=21)
-
-[OSS LICENSE](https://www.notion.so/OSS-LICENSE-b8af4f8cfdca480fb2edb97aaff151f9?pvs=21)
+[日本語版README](https://github.com/cybersecuritycloud/sasanka/blob/master/README.ja.md)
