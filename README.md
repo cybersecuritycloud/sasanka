@@ -1,4 +1,4 @@
-# README
+# README(OSS publish)
 
 # Overview
 
@@ -23,6 +23,7 @@ Some plugins are provided as OSS, and users can choose to add the necessary func
 | ssk-saferedirect | Strict Redirection | Strict host to redirect by whitelist. |
 | ssk-strictparameter | Strict and Validate Parameters | Validating params like JSON Schema and it can also restrict value to prevent MassAssignment for example. |
 | ssk-telemetry | Output Telemetry | Output telemetry to stdout or stderr. Telemetry means metrics of latency, count |
+| ssk-allowkey | Restrict parameter containing any key | Restrict each parameter containing any key to prevent MassAssignment, one of OWASP Top 10. |
 
 These plugins are **not compatible** with DB-less mode.
 
@@ -44,6 +45,10 @@ If you already have KONG installed, please skip this.
 - postgreSQL
 - Lua ≥ 5.1, 5.3
 - luarocks
+
+### Mention
+
+This is Kong Custom plugin so you must use Kong from source. You may not use it from docker  Kong image.
 
 ### Additional
 
@@ -70,13 +75,13 @@ Execute following.
 ```bash
 git clone https://github.com/cybersecuritycloud/sasanka.git
 cd sasanka
-luarocks install release/${PLUGIN_NAME}${VERSIONS}.all.rock
+luarocks install release/${PLUGIN_NAME}.${VERSIONS}.all.rock
 ```
 
-And add your `kong.conf` ’s plugins item you want like following example.
+And add your `kong.conf` ’s plugins item you want like following example. And then you must restart Kong.
 
 ```bash
-plugins = bundled,ssk-detecthandling,ssk-safehost,ssk-pm,ssk-cors,ssk-std-logger,ssk-ua-filter,ssk-optimizer,ssk-libinjection,ssk-saferedirect,ssk-clickjacking,ssk-strictparameter,ssk-response-transform,ssk-telemetry
+plugins = bundled,ssk-detecthandling,ssk-safehost,ssk-pm,ssk-cors,ssk-std-logger,ssk-ua-filter,ssk-optimizer,ssk-libinjection,ssk-saferedirect,ssk-clickjacking,ssk-strictparameter,ssk-response-transform,ssk-telemetry,ssk-allowkey
 ```
 
 If you can’t install plugins well by above, you can copy source code to kong’s directory.
@@ -93,6 +98,10 @@ And you should replace `SERVICE_NAME|SERVICE_ID`with the `id` or `name` of 
 
 Replace localhost and 8081 to your Kong AdminHost and Port each other.
 
+Almost plugins have config.tags on config field. This tags can use to handle response when detected. You can handle detected response to any custom response or you can select that request won’t be blocked and output only logs.
+
+If you want more information, see each plugin’s schema.lua.
+
 ### ssk-pm
 
 Pattern matching is performed for patterns read in the settings.
@@ -102,7 +111,7 @@ Enable on Service
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -H "Content-Type: application/json" \
-    -d '{"name": "ssk-pm",  
+    -d '{"name": "ssk-pm",
 		"config": { "patterns" : [ {"name": "example-pattern-key", "patterns" ["aa", "bb"] } ],
 		"params": [ { "in": "param_req_query",  "key": "*", "patterns": ["example-pattern-key"] } ] } 
 		}'
@@ -130,12 +139,18 @@ Enable on Service Example
 
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
-    -d "name=ssk-safehost" \
-    -d "config.host_check=https://a.com"
+    -H "Content-Type: application/json" \
+		-d '{
+			"name": "ssk-safehost", 
+			"config": {
+				"tags": ["status409"], 
+				"host_check": "HostName.com"
+		}'
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
 | config.host_check | string | Set the hostname of the upstream.By default, port:80 is set, but if the port is other than 80, the port must also be included. | true |  |
 
 ### ssk-cors
@@ -152,6 +167,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d '{
 			"name": "ssk-cors", 
 			"config": {
+				"tags": ["log"],
 				"block": true, 
 				"modify_response_header": true, 
 				"allow_origins": ["*"],
@@ -168,6 +184,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
 | config.block | boolean | enable cors block | true |  |
 | config.modify_response_header | boolean | Sets whether to modify the response header when a detection or block is made. | - | nil |
 | config.allow_origins | array of string elements | Defines which origins are allowed."*"is ALL ARE ALLOWED. null is ALL ARE NOT ALLOWED.If modify_response_header is true, add Access-Control-Allow-Origin: configuration value to the Header. | - | nil |
@@ -189,18 +206,37 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 		-d '{
 				"name": "ssk-detecthandling", 
 				"config": {
-					"headers": [{"key": "x-gateway", "value": "sasanka-kong-gateway"}], 
-					"status": "441", 
-					"body": "detected by sasanka"
-					}
-				}'
+					"filters" : [
+						{
+								"tag" : "status_401",
+								"status" : 401,
+						     "headers" : [ 
+										{"key": "CustomHeader", "value": "CustomValue" },
+				            {"key": "CustomHeader2", "value" : "CustomValue2" }
+				        ],
+				        "body" : "some error text"
+				        "default" : true, 
+						},
+						{
+								"tag" : "status409",
+								"status" : 409,
+						},
+						{
+								"tag" : "log"
+						}
+					]
+				}
+			}'
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
-| config.status | integer | Sets the response status when detected. | true |  |
-| config.headers | array of table elements | Sets the response headers in key-value format when detected. | true |  |
-| config.body | string | Sets the response body when detected. | true |  |
+| config.filters | array of object |  | true |  |
+| config.filters[i].tag | string | When a Plugin is detected, the response is made in accordance with the tag of the Plugin; if the tag is not set to anything other than the tag, only logging is output and no blocking is performed. | true |  |
+| config.filters[i].status | integer | Sets the response status when detected. | - |  |
+| config.filters[i].headers | array of table elements | Sets the response headers in key-value format when detected. | - |  |
+| config.filters[i].body | string | Sets the response body when detected. | - |  |
+| config.filters[i].default | boolean | When a Plugin is detected and tag of plugin is not configured on this plugin,  default is performed. | - |  |
 
 ### ssk-std-logger
 
@@ -220,19 +256,26 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | config.std | string | Select out or err for where to output detected log. | true |  |
 | config.header | string | You can set to specify log header. |  | [ssk-detect] |
 
-### Log Rule Id
+### Default Log Format
 
-The detection logs output from ssk-std-logger are managed by the following rule IDs.
+```yaml
+[header] {[plugin_id] [argument]}
+```
+
+### Log Id
+
+The detection logs output from ssk-std-logger are managed by the following our IDs.
 
 | Log Id | Detected by |
 | --- | --- |
-| 10 | ssk-pm |
-| 20 | ssk-safehost |
-| 30 | ssk-cors |
-| 40 | ssk-ua-filter |
-| 60 | ssk-libinjection |
-| 70 | ssk-saferedirect |
-| 80 | ssk-strictparamater |
+| 200 | ssk-pm |
+| 300 | ssk-safehost |
+| 400 | ssk-cors |
+| 700 | ssk-ua-filter |
+| 1300 | ssk-libinjection |
+| 1500 | ssk-saferedirect |
+| 1800 | ssk-strictparamater |
+| 2500 | ssk-allowkey |
 
 ### ssk-ua-filter
 
@@ -246,6 +289,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 		-d '{
 				"name": "ssk-ua-filter", 
 				"config": {
+					"tags": ["status409"],
 					"block_useragents" : ["python/", "Powershell"], 
 					"block_no_useragent" : true
 					}
@@ -254,6 +298,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
 | config.block_useragents | array of string | Array of User-Agent to block.
 The function searches for the first match | - |  |
 | config.block_no_useragent | bool | Block if User-Agent is not set. | - | false |
@@ -278,8 +323,9 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d '{
 			"name": "ssk-libinjection",
 			"config":{ 
+				"tags": ["status409"],
 				"params": [ 
-					{ "in": "param_req_query" } 
+					{ "in": "param_req_query" },
 					{ "in": "param_req_body",  "key": "var", "sql": true } 
 					]
 				} 
@@ -288,6 +334,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
 | config.params[i].in | string | Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].Select one of them or use "*" or null to apply all params. | - | nil |
 | config.params[i].key | string | Define the parameter key to apply detection.If "*" or null, all parameter keys are applied. | - | nil |
 | config.params[i].sql | bool | Parse SQL syntax | - | true |
@@ -304,11 +351,13 @@ Enable on Service Example
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 	-d "config.name=ssk-clickjacking" \
+	-d "config.tags[]=status409" \
   -d "config.policy=DENY"
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
 | config.policy | string | Select “DENY” or “SAMEORIGIN”. DENY don’t allows all rewriting iframe. | - | DENY |
 
 ### ssk-saferedirect
@@ -325,6 +374,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d '{
 			"name": "ssk-saferedirect",
 			"config": {
+				"tags": ["status409"],
 				"params": [ 
 					{ "in": "param_req_body",  "key": "redirect", "prefix": "http://my-redirect/api/" } 
 					]
@@ -334,6 +384,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
 | config.params[].in | string | Defines the item to apply detection to. ["param_req_query", “param_req_body” ].Select one of them | - |  |
 | config.params[].key | string | Define the parameter key to apply detection. “*” is NOT enable. |  |  |
 | config.params[].prefix | string | Host to match prefix allow redirect. |  |  |
@@ -350,6 +401,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d '{
 			"name": "ssk-strictparameter",
 			"config": {
+				"tags": ["status409"],
 				"params": [
 		        { "in": "param_req_query", "key": "readonly", "type": "boolean" },
 		        { "in": "param_req_query", "key": "created_at", "type": "date", "min": 10, "max": 10 },
@@ -363,6 +415,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
 | config.params[].in | string | Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_body”, ].Select one of them | true |  |
 | config.params[].key | string | Define the parameter key to apply detection. | true |  |
 | config.params[].type | string | Select one of following. boolean, integer, number, date, date-time, string, uuid, regex. | true |  |
@@ -395,33 +448,67 @@ curl -i -X POST http://localhost:8001/plugins \
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
 | config.std | string | You can select the place to output either out or err. | true | “out” |
-| config.tag | string | The tag for example if you want to divide the data in endpoint. | - |  |
+| config.tag | string | The tag for example if you want to divide the data in endpoint. Mention! this is not same to tags. | - |  |
 | config.header | string | The header of output telemetry. For example, you can pick up telemetry using fluentd by specify this header easily. | - |  |
+
+### ssk-allowkey
+
+Key restriction of request parameters in the form of a white list.
+
+If the request containing any key not containing this config, request will be detected.
+
+Enable on Service Example
+
+```bash
+curl -i -X POST http://localhost:8001/plugins \
+    -H "Content-Type: application/json" \
+    -d '{
+				"name": "ssk-allowkey",
+				"config": {
+					"tags": ["hoge"],
+					"query" : [ "num", "pages"],
+					"body" : ["user", "date"],
+					"cookie" : ["session_id", "expired"],
+					"header" : ["host", "user-agent", "cookie"]
+				}
+		}'
+```
+
+| key | type | description | required | default value |
+| --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
+| config.query | array of string | You can set query parameter key to allow. If this key is not configured or value is nil, all query parameter key will be allowed. If value is empty array, [], all query parameter will be denied. | - | nil |
+| config.header | array of string | You can set header parameter key to allow. If this key is not configured or value is nil, all header parameter key will be allowed.If value is empty array, [], all header parameter will be denied. | - | nil |
+| config.cookie | array of string | You can set cookie parameter key to allow. If this key is not configured or value is nil, all cookie parameter key will be allowed.If value is empty array, [], all cookie parameter will be denied. | - | nil |
+| config.body | array of string | You can set body parameter key to allow. If this key is not configured or value is nil, all body parameter key will be allowed.If value is empty array, [], all body parameter will be denied. | - | nil |
 
 ---
 
 # Quick Start
 
-### Requirements
+### requirements
 
 - Kong
     - Need to `kong restart` after adding selected plugin to plugins in kong.conf
 - curl
 - python3 (>=3.6)
-- Core-Rule-Set (automated Install in quickstart.sh)
+- ( Core-Rule-Set v3.3.4 (automated Install in quickstart.sh) )
 
-### Usage
+### Execute
+
 ```bash
 ./quickstart.sh YOUR_SERVICE_NAME_OR_ID
 ```
+
 ### Description
+
 This script is to start sasanka for default-settings quickly. The default-setting is recommended by developer. And it contains builder of OWASP Core-Rule-Set, then after building it will be set to our plugin. 
 
-Mention! 
+### Mention
 
 This quickstart targets to start quickly and not target to use ever. So, if misdetection is caused by it, you have to review and modify plugin’s config. 
 
-And it doesn’t contain to start following plugins, `ssk-safehost` , `ssk-strictparameter` , `ssk-telemetry`. Because these must be set by yourself due to important content,  complexing field or unknown it’s necessary for you.
+And it doesn’t contain to start following plugins, `ssk-safehost` , `ssk-strictparameter` , `ssk-telemetry`. Because these must be set by yourself due to important content,  complexing field or unknown it’s necessary for you. 
 
 ---
 
@@ -450,3 +537,7 @@ CyberSecurityCloud.Inc
    See the License for the specific language governing permissions and
    limitations under the License.
 ```
+
+[README.ja](https://www.notion.so/README-ja-5b15fb8e8b3a42bda74556c1f59ddb1e?pvs=21)
+
+[OSS LICENSE](https://www.notion.so/OSS-LICENSE-b8af4f8cfdca480fb2edb97aaff151f9?pvs=21)

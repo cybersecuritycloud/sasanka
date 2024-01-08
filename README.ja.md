@@ -1,4 +1,4 @@
-# README(Japanese)
+# README.ja
 
 # 概要
 
@@ -22,7 +22,8 @@ Kong Gatewayの更なるセキュリティ向上のためWAFとしての機能�
 | ssk-clickjacking | Prevent Clickjacking | Clickjackingを防ぎます。 |
 | ssk-saferedirect | Strict Redirection | 許可リスト方式でリダイレクト先を制限します。 |
 | ssk-strictparameter | Strict and Validate Parameters | パラメータの型や値域を制限することができます。 |
-| ssk-telemetry | Output Telemetry | Output telemetry to stdout or stderr. Telemetry means metrics of latency, count |
+| ssk-telemetry | Output Telemetry | 標準出力or標準エラー出力にレイテンシやリクエストカウントなどのメトリクスを出力します。 |
+| ssk-allowkey | Restrict parameter containing any key | 各パラメータのkeyをホワイトリスト形式で制限します。このPluginはOWASP Top10のMassAssignmentの防止になります。 |
 
 このPlugin はDB-lessモードでは**動作しません**。
 
@@ -42,6 +43,10 @@ Kongのインストールは[こちら](https://docs.konghq.com/gateway/2.8.x/in
 - postgresql
 - Lua ≥ 5.1
 - luarocks
+
+### Mention
+
+このPluginはカスタムPluginのため、Kongをソースからインストールする必要があります。
 
 ### Additional
 
@@ -69,7 +74,7 @@ cd sasanka
 luarocks install release/${PLUGIN_NAME}${VERSIONS}.all.rock
 ```
 
-そして`kong.conf`のpluginsに下記を追加します。
+そして`kong.conf`のpluginsに下記を追加して、Kongを再起動します。
 
 ```bash
 plugins = bundled,ssk-detecthandling,ssk-safehost,ssk-pm,ssk-cors,ssk-std-logger,ssk-ua-filter,ssk-optimizer,ssk-libinjection,ssk-saferedirect,ssk-clickjacking,ssk-strictparameter,ssk-response-transform,ssk-telemetry
@@ -124,12 +129,18 @@ Enable on Service
 
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
-    -d "name=ssk-safehost" \
-    -d "config.host_check=https://a.com"
+    -H "Content-Type: application/json" \
+		-d '{
+			"name": "ssk-safehost", 
+			"config": {
+				"tags": ["status409"], 
+				"host_check": "HostName.com"
+		}'
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
 | config.host_check | string | upstreamのhost名を設定します。デフォルトではport:80が設定されますが、upstreamのportが80以外の場合は、portも含めて設定が必要です。 | true | nil |
 
 ### ssk-cors
@@ -143,15 +154,19 @@ Enable on Service
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 		-H "Content-Type: application/json" \
-    -d '{"name"= "ssk-cors", 
-		"config": {"block": true, 
-		"modify_response_header": true, 
-		"allow_origins": ["*"],
-		"allow_methods": ["OPTIONS", "GET", "PUT"],
-		"allow_headers": ["*"],
-		"expose_headers": ["*"],
-		"allow_credentials": false,
-		"max_age": 3600}
+    -d '{
+			"name": "ssk-cors", 
+			"config": {
+				"tags": ["log"],
+				"block": true, 
+				"modify_response_header": true, 
+				"allow_origins": ["*"],
+				"allow_methods": ["OPTIONS", "GET", "PUT"],
+				"allow_headers": ["*"],
+				"expose_headers": ["*"],
+				"allow_credentials": false,
+				"max_age": 3600
+				}
 		}'
 ```
 
@@ -159,6 +174,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
 | config.block | boolean | 検知が行われた場合に、requestをブロックするか設定します。 | true |  |
 | config.modify_response_header | boolean | 検知、ブロックが行われた場合にresponse headerを修正するか設定します。 | - | nil |
 | config.allow_origins | array of string elements | 許可するoriginを定義します。”*” or null の場合は全て許可しません。modify_response_header is true の場合、Headerに Access-Control-Allow-Origin: 設定値 を追加します。 | - | nil |
@@ -185,9 +201,12 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
-| config.status | integer | 検知した際のresponse statusを設定します。 | true | nil |
-| config.headers | array of table elements | 検知した際のresponse headersをkey-value形式で設定します。 | true | nil |
-| config.body | string | 検知した際のresponse body を設定します。 | true | nil |
+| config.filters | array of object |  | true |  |
+| config.filters[i].tag | string | プラグインが検知した際に、このtagの挙動を行います。tag以外に設定されていない場合、responseを返さず、検知したログのみを出力します。 | true |  |
+| config.filters[i].status | integer | 検知した際のresponse statusを設定します。 | - |  |
+| config.filters[i].headers | array of table elements | 検知した際のresponse headersをkey-value形式で設定します。 | - |  |
+| config.filters[i].body | string | 検知した際のresponse body を設定します。 | - |  |
+| config.filters[i].default | boolean | 検知した際のPluginのtagがこのPlugin上に存在しない場合の動作を設定します。 | - |  |
 
 ### ssk-std-logger
 
@@ -204,20 +223,28 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
 | config.std | string | 検知ログの出力先を設定する。out or err を設定でき、標準出力または標準エラー出力で設定する。 | true | - |
+| config.header | string | parsingに利用するlog headerを設定します。 | - | [ssk-detect] |
 
-### Log Rule Id
+### Default Log Format
+
+```yaml
+[header] {[plugin_id] [argument]}
+```
+
+### Log Id
 
 ssk-std-loggerから出力された検知ログは以下のルールIDで管理される。
 
 | Log Id | Detected by |
 | --- | --- |
-| 10 | ssk-pm |
-| 20 | ssk-safehost |
-| 30 | ssk-cors |
-| 40 | ssk-ua-filter |
-| 60 | ssk-libinjection |
-| 70 | ssk-saferedirect |
-| 80 | ssk-strictparamater |
+| 200 | ssk-pm |
+| 300 | ssk-safehost |
+| 400 | ssk-cors |
+| 700 | ssk-ua-filter |
+| 1300 | ssk-libinjection |
+| 1500 | ssk-saferedirect |
+| 1800 | ssk-strictparamater |
+| 2500 | ssk-allowkey |
 
 ### ssk-ua-filter
 
@@ -231,6 +258,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 		-d '{
 				"name": "ssk-ua-filter", 
 				"config": {
+					"tags": ["status409"],
 					"block_useragents" : ["python/", "Powershell"], 
 					"block_no_useragent" : true
 					}
@@ -239,6 +267,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
 | config.block_useragents | array | ブロックするUAのリスト。前方一致でマッチする。 | - |  |
 | config.block_no_useragent | bool | UAを持たない場合にブロックするか否か。 | - | false |
 
@@ -262,8 +291,9 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d '{
 			"name": "ssk-libinjection",
 			"config":{ 
+				"tags": ["status409"],
 				"params": [ 
-					{ "in": "param_req_query" } 
+					{ "in": "param_req_query" },
 					{ "in": "param_req_body",  "key": "var", "sql": true } 
 					]
 				} 
@@ -272,6 +302,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
 | config.params[i].in | string | 検知を行う場所を次のうちから決定します。 ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].この中から選んで指定するか、’*’で全てのparamに対して検知を行います。 | - | nil |
 | config.params[i].key | string | 検知を適用するkeyを指定します。* or null では全てのkeyに対して適用されます。 | - | nil |
 | config.params[i].sql | bool | SQL構文解析をします | - | true |
@@ -288,12 +319,14 @@ Enable on Service Example
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 	-d "config.name=ssk-clickjacking" \
+	-d "config.tags[]=status409" \
   -d "config.policy=DENY"
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
 | config.policy | string | “DENY” or “SAMEORIGIN”から選べます。 | - | DENY |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
 
 ### ssk-saferedirect
 
@@ -307,6 +340,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d '{
 			"name": "ssk-saferedirect",
 			"config": {
+				"tags": ["log"],
 				"params": [ 
 					{ "in": "param_req_body",  "key": "redirect", "prefix": "http://my-redirect/api/" } 
 					]
@@ -316,6 +350,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
 | config.params[].in | string | 検知を有効にするparamを["param_req_query", “param_req_body” ]の中から一つ選びます。 | - |  |
 | config.params[].key | string | 検知を適用するkeyを選びます。* or nullは使用できません。 |  |  |
 | config.params[].prefix | string | リダイレクトを許可するhostのprefixを指定します。 |  |  |
@@ -332,6 +367,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d '{
 			"name": "ssk-strictparameter",
 			"config": {
+				"tags": ["status409"]
 				"params": [
 		        { "in": "param_req_query", "key": "readonly", "type": "boolean" },
 		        { "in": "param_req_query", "key": "created_at", "type": "date", "min": 10, "max": 10 },
@@ -345,6 +381,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
 | config.params[].in | string | 適用する項目を["param_req_query", "param_req_path", “param_req_body”, ]のうちから選択します。 | true |  |
 | config.params[].key | string | 適用するkeyを指定します。 | true |  |
 | config.params[].type | string | 次のうちから選択します。boolean, integer, number, date, date-time, string, uuid, regex | true |  |
@@ -380,6 +417,37 @@ curl -i -X POST http://localhost:8001/plugins \
 | config.tag | string | タグをつけることができます。 | - |  |
 | config.header | string | 出力にヘッダをつけることができます。例えば、fluentdなどでlogを簡単に抽出することができます。 | - |  |
 
+### ssk-allowkey
+
+リクエストパラメータのkeyをホワイトリスト形式で制限します。
+
+このプラグインの設定に含まれていないパラメータkeyがRequestに含まれていた場合、リクエストは検知されます。
+
+Enable on Service Example
+
+```bash
+curl -i -X POST http://localhost:8001/plugins \
+    -H "Content-Type: application/json" \
+    -d '{
+				"name": "ssk-allowkey",
+				"config": {
+					"tags": ["hoge"],
+					"query" : [ "num", "pages"],
+					"body" : ["user", "date"],
+					"cookie" : ["session_id", "expired"],
+					"header" : ["host", "user-agent", "cookie"]
+				}
+		}'
+```
+
+| key | type | description | required | default value |
+| --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
+| config.query | array of string | 許可するqueryパラメータのkeyを設定します。このkey(query)が設定に含まれていない、またはnilの場合、全てのqueryパラメータkeyが許可されます。空リストが設定されている場合、全てのqueryパラメータのkeyが拒否されます。 | - | nil |
+| config.header | array of string | 許可するheaderパラメータのkeyを設定します。このkey(header)が設定に含まれていない、またはnilの場合、全てのheaderパラメータkeyが許可されます。空リストが設定されている場合、全てのheaderパラメータのkeyが拒否されます | - | nil |
+| config.cookie | array of string | 許可するcookieパラメータのkeyを設定します。このkey(cookie)が設定に含まれていない、またはnilの場合、全てのcookieパラメータkeyが許可されます。空リストが設定されている場合、全てのcookieパラメータのkeyが拒否されます | - | nil |
+| config.body | array of string | 許可するbodyパラメータのkeyを設定します。このkey(body)が設定に含まれていない、またはnilの場合、全てのbodyパラメータkeyが許可されます。空リストが設定されている場合、全てのbodyパラメータのkeyが拒否されます | - | nil |
+
 ---
 
 # クイックスタート
@@ -387,15 +455,22 @@ curl -i -X POST http://localhost:8001/plugins \
 ### requirements
 
 - Kong
-    - `ssk-detecthandling,ssk-safehost,ssk-pm,ssk-cors,ssk-std-logger` をkong.confに追加してから `kong restart` を行う必要があります。
+    - 全てのPluginをkong.confに追加してから `kong restart` を行う必要があります。
 - curl
 - python3 (>=3.6)
+
 ### Usage
+
 ```bash
 ./quickstart.sh YOUR_SERVICE_NAME_OR_ID
 ```
+
 ### Description
+
 このquickstartはsasankaをdefault-settingで、即座に利用するためのものです。
+
+### Mention
+
 quickstartの設定をそのまま使い続けることは推奨されていません。誤検知が発生した場合には自身で設定を見直し、変更する必要があります。
 
 ---
@@ -407,3 +482,21 @@ quickstartの設定をそのまま使い続けることは推奨されていま�
 [https://www.cscloud.co.jp/](https://www.cscloud.co.jp/)
 
 ---
+
+# ライセンス
+
+```
+   Copyright 2023 CyberSecurityCloud Inc.
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+```
