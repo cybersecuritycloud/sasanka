@@ -1,5 +1,5 @@
-package = "ssk-strictparameter"
-version = "1.0.0-1"
+package = "ssk-libinjection"
+version = "1.1.0-1"
 source = {
 	url = "https://github.com/cybersecuritycloud/sasanka.git"
 }
@@ -18,9 +18,10 @@ build = {
       ["kong.plugins.ssk-core.params"] = "kong/plugins/ssk-core/params.lua",
       ["kong.plugins.ssk-core.request"] = "kong/plugins/ssk-core/request.lua",
       ["kong.plugins.ssk-core.response"] = "kong/plugins/ssk-core/response.lua",
-      ["kong.plugins.ssk-strictparameter.daos"] = "kong/plugins/ssk-strictparameter/daos.lua",
-      ["kong.plugins.ssk-strictparameter.handler"] = "kong/plugins/ssk-strictparameter/handler.lua",
-      ["kong.plugins.ssk-strictparameter.schema"] = "kong/plugins/ssk-strictparameter/schema.lua",
-      ["kong.plugins.ssk-strictparameter.types"] = "kong/plugins/ssk-strictparameter/types.lua"
+      ["kong.plugins.ssk-core.response_body"] = "kong/plugins/ssk-core/response_body.lua",
+      ["kong.plugins.ssk-libinjection.daos"] = "kong/plugins/ssk-libinjection/daos.lua",
+      ["kong.plugins.ssk-libinjection.handler"] = "kong/plugins/ssk-libinjection/handler.lua",
+      ["kong.plugins.ssk-libinjection.libinjection"] = "kong/plugins/ssk-libinjection/libinjection.lua",
+      ["kong.plugins.ssk-libinjection.schema"] = "kong/plugins/ssk-libinjection/schema.lua"
    }
 }

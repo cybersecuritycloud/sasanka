@@ -15,6 +15,22 @@ local type_header_array = {
         elements = type_header,
 }
 
+local type_filter = {
+	type = "record",
+        fields = {
+		{ default = { type = "boolean" }},
+                { tag = { type = "string" }},  
+		{ status = { type = "number" }},  
+                { headers = type_header_array },
+                { body = { type = "string" }},  
+	}
+}
+
+local type_filter_array = {
+        type = "array",
+        elements = type_filter,		
+}
+
 local schema = {
   name = PLUGIN_NAME,
   fields = {
@@ -25,9 +41,7 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
-		{ status = { type = "number" }},  
-                { headers = type_header_array },
-                { body = { type = "string" }},  
+		{ filters = type_filter_array },
 	},
         entity_checks = {
           -- add some validation rules across fields

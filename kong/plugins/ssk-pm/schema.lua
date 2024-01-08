@@ -15,6 +15,11 @@ local type_pattern_name_array = {
         elements = type_pattern_name
 }
 
+local type_string_array = {
+        type = "array",
+        elements = { type = "string" },
+}
+
 local type_pattern_array = {
         type = "array",
         elements = type_pattern
@@ -25,6 +30,7 @@ local type_pattern_info = {
         fields = {
                 { name = { type = "string" }},
                 { patterns = type_pattern_array },
+		{ ["tags"] = type_string_array },
 	}
 }
 local type_pattern_info_array = {

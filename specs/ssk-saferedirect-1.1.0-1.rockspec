@@ -1,5 +1,5 @@
-package = "ssk-std-logger"
-version = "1.0.0-1"
+package = "ssk-saferedirect"
+version = "1.1.0-1"
 source = {
 	url = "https://github.com/cybersecuritycloud/sasanka.git"
 }
@@ -18,8 +18,9 @@ build = {
       ["kong.plugins.ssk-core.params"] = "kong/plugins/ssk-core/params.lua",
       ["kong.plugins.ssk-core.request"] = "kong/plugins/ssk-core/request.lua",
       ["kong.plugins.ssk-core.response"] = "kong/plugins/ssk-core/response.lua",
-      ["kong.plugins.ssk-std-logger.daos"] = "kong/plugins/ssk-std-logger/daos.lua",
-      ["kong.plugins.ssk-std-logger.handler"] = "kong/plugins/ssk-std-logger/handler.lua",
-      ["kong.plugins.ssk-std-logger.schema"] = "kong/plugins/ssk-std-logger/schema.lua"
+      ["kong.plugins.ssk-core.response_body"] = "kong/plugins/ssk-core/response_body.lua",
+      ["kong.plugins.ssk-saferedirect.daos"] = "kong/plugins/ssk-saferedirect/daos.lua",
+      ["kong.plugins.ssk-saferedirect.handler"] = "kong/plugins/ssk-saferedirect/handler.lua",
+      ["kong.plugins.ssk-saferedirect.schema"] = "kong/plugins/ssk-saferedirect/schema.lua"
    }
 }

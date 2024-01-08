@@ -2,6 +2,11 @@ local typedefs = require "kong.db.schema.typedefs"
 
 local PLUGIN_NAME = "ssk-libinjection"
 
+local type_tag_array = {
+        type = "array",
+        elements = { type = "string" }
+}
+
 local type_path_array = {
         type = "array",
         elements = { type = "string" }
@@ -31,6 +36,7 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
+		{ tags = type_tag_array },
 		{ paths = type_path_array },
 		{ params = type_param_info_array },
 	},

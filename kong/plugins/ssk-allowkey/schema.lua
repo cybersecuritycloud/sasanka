@@ -1,23 +1,11 @@
 local typedefs = require "kong.db.schema.typedefs"
 
-local PLUGIN_NAME = "ssk-saferedirect"
+local PLUGIN_NAME = "ssk-strictparameter"
+
 
 local type_string_array = {
         type = "array",
-        elements = { type = "string" }
-}
-
-local type_param_info = {
-        type = "record",
-        fields = {
-                { ["in"] = { type = "string", default = "param_req_*", }},
-                { key = { type = "string", default = "*", }},
-		{ prefix = { type = "string" }},
-	}
-}
-local type_param_info_array = {
-        type = "array",
-        elements = type_param_info,
+        elements = { type = "string" },
 }
 
 local schema = {
@@ -31,8 +19,10 @@ local schema = {
         type = "record",
         fields = {
 		{ ["tags"] = type_string_array },
-		{ paths = type_string_array },
-		{ params = type_param_info_array },
+		{ ["query"] = type_string_array },
+		{ ["body"] = type_string_array },
+		{ ["cookie"] = type_string_array },
+		{ ["header"] = type_string_array },
 	},
         entity_checks = {
           -- add some validation rules across fields

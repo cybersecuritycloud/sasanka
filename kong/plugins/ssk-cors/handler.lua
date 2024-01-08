@@ -2,10 +2,10 @@ local table = require "table"
 local core = require "kong.plugins.ssk-core.core"
 local util = require "kong.plugins.ssk-core.lib.utils"
 
-local RULE_ID_CORS_BASE = 30
-local RULE_ID_CORS_ORIGIN_NOT_ALLOWED = 31
-local RULE_ID_CORS_METHOD_NOT_ALLOWED = 32
-local RULE_ID_CORS_HEADER_NOT_ALLOWED = 33
+local RULE_ID_CORS_BASE = 400
+local RULE_ID_CORS_ORIGIN_NOT_ALLOWED = 401
+local RULE_ID_CORS_METHOD_NOT_ALLOWED = 402
+local RULE_ID_CORS_HEADER_NOT_ALLOWED = 403
 
 
 local function isInclude(needle, stack)
@@ -23,12 +23,12 @@ local function h_req_header( params, config )
 			local subj = util.get_safe( params, "origin" )
 			if subj ~= nil and
 				not isInclude( subj, config.allow_origins ) then
-				return { rule_id = RULE_ID_CORS_ORIGIN_NOT_ALLOWED, args = { subj } }
+				return { rule_id = RULE_ID_CORS_ORIGIN_NOT_ALLOWED, args = { subj }, tags = config.tags }
 			end
 		else
 			local subj = util.get_safe( params, "origin" )
 			if subj then
-				return { rule_id = RULE_ID_CORS_ORIGIN_NOT_ALLOWED, args = { subj } }
+				return { rule_id = RULE_ID_CORS_ORIGIN_NOT_ALLOWED, args = { subj }, tags = config.tags  }
 			end
 		end
 		
@@ -36,7 +36,7 @@ local function h_req_header( params, config )
 		if util.get_safe( config.allow_methods ) then
 			local subj = kong.request.get_method()
 			if not isInclude( subj, config.allow_methods ) then
-				return { rule_id = RULE_ID_CORS_METHOD_NOT_ALLOWED, args = { subj } }
+				return { rule_id = RULE_ID_CORS_METHOD_NOT_ALLOWED, args = { subj }, tags = config.tags  }
 			end
 		end
 
@@ -45,7 +45,7 @@ local function h_req_header( params, config )
 		if util.get_safe( config.allow_headers ) then
 			for subj, v in pairs(params) do
 				if not isInclude( subj, config.optimized_config.allow_headers ) then
-					return { rule_id = RULE_ID_CORS_HEADER_NOT_ALLOWED, args = { subj } }
+					return { rule_id = RULE_ID_CORS_HEADER_NOT_ALLOWED, args = { subj }, tags = config.tags  }
 				end
 			end
 		end

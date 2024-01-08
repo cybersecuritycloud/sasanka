@@ -1,5 +1,24 @@
 local common = require "kong.plugins.ssk-core.common"
 local util = require "kong.plugins.ssk-core.lib.utils"
+local response_body = require "kong.plugins.ssk-core.response_body"
+
+local function enable_body_write()
+	kong.ctx.shared.cap.response_body_write_enabled = true
+
+	if ngx.header.content_length then	
+		ngx.header.content_length = nil
+	end
+end
+
+local function rewrite_body()
+	if kong.ctx.shared.cap.response_body_write_enabled ~= true then
+		-- disabled
+		return
+	end
+
+	local encoded_body, len = response_body.get_encoded_body()
+	ngx.arg[1] = encoded_body
+end
 
 local function run_header_handler()
 	local handlers = kong.ctx.plugin.handlers
@@ -73,6 +92,7 @@ local function phase_body()
 
 	-- do below on duty plugin only
 	if check_duty() then
+		kong.ctx.shared.cap.body_part = nil
 		local parsers = util.get_safe_d({}, kong.ctx.shared.cap.handlers, "parse_res_body" )
 		if #parsers > 0 then
 			-- if have custom parser
@@ -96,6 +116,7 @@ local function phase_body()
 	end
 
 	run_body_handler()
+	rewrite_body()
 end
 
 local function run_log_handler()
@@ -114,6 +135,9 @@ local function run_log_handler()
 end
 
 return {
+	enable_body_write = enable_body_write,
+	get_body_part = response_body.get_body_part,
+	set_body_part = response_body.set_body_part,
 	run_header_handler = run_header_handler,
 	phase_body = phase_body,
 	run_log_handler = run_log_handler,

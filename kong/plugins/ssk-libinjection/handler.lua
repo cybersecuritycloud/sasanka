@@ -2,9 +2,9 @@ local core = require "kong.plugins.ssk-core.core"
 local util = require "kong.plugins.ssk-core.lib.utils"
 local pm = require "kong.plugins.ssk-pm.patternmatcher"
 
-local RULE_ID_LIBINJECTION_BASE = 60
-local RULE_ID_LIBINJECTION_SQL = 61
-local RULE_ID_LIBINJECTION_XSS = 62
+local RULE_ID_LIBINJECTION_BASE = 1300
+local RULE_ID_LIBINJECTION_SQL = 1301
+local RULE_ID_LIBINJECTION_XSS = 1302
 
 
 local function make_dict_by_in( params )
@@ -43,7 +43,12 @@ end
 
 local function run_match( subj, param_config )
 	local libinjection = require "kong.plugins.ssk-libinjection.libinjection"
-	
+	kong.log.inspect(libinjection)
+	if not libinjection.try_load() then
+		kong.log.err( "!! libinjection not loaded !!")
+		return
+	end
+
 	if param_config.sql then
 		local d, fingerprint = libinjection.sqli(subj)
 		if d then
@@ -68,6 +73,7 @@ local function h(cat, k, v, params, ...)
 			local e = run_match( v, params[i] )
 			if e then 
 				e.args[2] = k 
+				e.tags = util.get_safe_d( {},kong.ctx.plugin.config, "tags" )
 				return e
 			end
 		end

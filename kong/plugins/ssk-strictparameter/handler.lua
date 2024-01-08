@@ -2,11 +2,11 @@ local core = require "kong.plugins.ssk-core.core"
 local util = require "kong.plugins.ssk-core.lib.utils"
 local matcher = require "kong.plugins.ssk-core.lib.matcher"
 
-local RULE_ID_STRICTPARAM_BASE = 80
-local RULE_ID_STRICTPARAM_TYPE = 81
-local RULE_ID_STRICTPARAM_REQUIRED = 82
-local RULE_ID_STRICTPARAM_MIN = 83
-local RULE_ID_STRICTPARAM_MAX = 84
+local RULE_ID_STRICTPARAM_BASE = 1800
+local RULE_ID_STRICTPARAM_TYPE = 1801
+local RULE_ID_STRICTPARAM_REQUIRED = 1802
+local RULE_ID_STRICTPARAM_MIN = 1803
+local RULE_ID_STRICTPARAM_MAX = 1804
 
 
 -- https://swagger.io/specification/#dataTypeFormat
@@ -125,7 +125,7 @@ local function check_type( t, target )
 	return false
 end
 
-local function h( cat, k, v, params, ...)
+local function h( cat, k, v, params, tags, ...)
 	local param = params[k]
 	if param["key"] == k then
 		if param["required"] then
@@ -135,12 +135,12 @@ local function h( cat, k, v, params, ...)
 		if param["type"] ~= nil then
 			if param["type"] == "regex" and param["pattern_ud"] then
 				if not check_regex( param["pattern_ud"], v ) then
-					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v }, tags = tags }
 				end
 			else
 				if not check_type( param["type"], v) then
 					kong.log.inspect( "detected", v )
-					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v }, tags = tags }
 				end
 			end
 		end
@@ -151,14 +151,14 @@ local function h( cat, k, v, params, ...)
 				local num = tonumber( v )
 
 				if num == nil then
-					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v }, tags = tags }
 				end
 				if num < param["min"] then
-					return { rule_id = RULE_ID_STRICTPARAM_MIN, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_MIN, args = { param["key"], param["type"], v }, tags = tags }
 				end
 			else
 				if string.len(v) < param["min"] then
-					return { rule_id = RULE_ID_STRICTPARAM_MIN, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_MIN, args = { param["key"], param["type"], v }, tags = tags }
 				end
 			end
 		end
@@ -169,25 +169,25 @@ local function h( cat, k, v, params, ...)
 				param["type"] == "number" then
 				local num = tonumber( v )
 				if num == nil then
-					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_TYPE, args = { param["key"], param["type"], v }, tags = tags }
 				end
 				if num > param["max"] then
-					return { rule_id = RULE_ID_STRICTPARAM_MAX, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_MAX, args = { param["key"], param["type"], v }, tags = tags }
 				end
 			else
 				if string.len(v) > param["max"] then
-					return { rule_id = RULE_ID_STRICTPARAM_MAX, args = { param["key"], param["type"], v } }
+					return { rule_id = RULE_ID_STRICTPARAM_MAX, args = { param["key"], param["type"], v }, tags = tags }
 				end
 			end
 		end
 	end
 end
 
-local function after_access()
+local function after_access( tags )
 	for cat, params in pairs( kong.ctx.plugin.required_map ) do
 		for k,v in pairs( params ) do
 			if not v then
-				return { rule_id = RULE_ID_STRICTPARAM_REQUIRED, args = { k } }
+				return { rule_id = RULE_ID_STRICTPARAM_REQUIRED, args = { k }, tags = tags }
 			end
 		end
 	end
@@ -202,7 +202,7 @@ function _M:init_handler( config )
 		self:add_param_handler( cat, config, h, params )
 	end
 
-	self:add_handler( "after_access", after_access )
+	self:add_handler( "after_access", after_access, config.tags )
 end
 
 

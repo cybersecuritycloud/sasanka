@@ -107,6 +107,10 @@ local function _loadlib()
 			end
 		end
 
+		if not path then
+			return false
+		end
+
 		lib = ffi.load(path)
 
 		if (lib) then
@@ -323,6 +327,20 @@ function _M.xss(string)
 	end
 
 	return lib.libinjection_xss(string, #string) == 1
+end
+
+
+--------------------------
+-- additional code
+--------------------------
+
+function _M.try_load()
+	if (not loaded) then
+		if (not _loadlib()) then
+			return false
+		end
+	end
+	return true
 end
 
 return _M

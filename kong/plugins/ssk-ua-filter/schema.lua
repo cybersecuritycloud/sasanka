@@ -18,6 +18,7 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
+		{ ["tags"] = type_string_array },
 		{ block_useragents = type_string_array },
 		{ block_no_useragent = { type = "boolean" }  },
 	},

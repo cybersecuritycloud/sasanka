@@ -4,6 +4,11 @@ local PLUGIN_NAME = "ssk-safehost"
 
 local type_string = { type = "string" }
 
+local type_string_array = {
+        type = "array",
+        elements = { type = "string" }
+}
+
 local schema = {
   name = PLUGIN_NAME,
   fields = {
@@ -14,6 +19,7 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
+		{ ["tags"] = type_string_array },
 		{ host_check = type_string },
 	},
         entity_checks = {

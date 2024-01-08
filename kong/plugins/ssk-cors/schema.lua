@@ -17,6 +17,7 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
+		{ ["tags"] = type_string_array },
 		{ block = {type = "boolean"}},
 		{ modify_response_header = {type = "boolean"}},
 		{ allow_origins = type_string_array },

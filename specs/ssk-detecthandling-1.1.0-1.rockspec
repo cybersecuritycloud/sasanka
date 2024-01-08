@@ -1,5 +1,5 @@
-package = "ssk-ua-filter"
-version = "1.0.0-1"
+package = "ssk-detecthandling"
+version = "1.1.0-1"
 source = {
 	url = "https://github.com/cybersecuritycloud/sasanka.git"
 }
@@ -18,8 +18,9 @@ build = {
       ["kong.plugins.ssk-core.params"] = "kong/plugins/ssk-core/params.lua",
       ["kong.plugins.ssk-core.request"] = "kong/plugins/ssk-core/request.lua",
       ["kong.plugins.ssk-core.response"] = "kong/plugins/ssk-core/response.lua",
-      ["kong.plugins.ssk-ua-filter.daos"] = "kong/plugins/ssk-ua-filter/daos.lua",
-      ["kong.plugins.ssk-ua-filter.handler"] = "kong/plugins/ssk-ua-filter/handler.lua",
-      ["kong.plugins.ssk-ua-filter.schema"] = "kong/plugins/ssk-ua-filter/schema.lua"
+      ["kong.plugins.ssk-core.response_body"] = "kong/plugins/ssk-core/response_body.lua",
+      ["kong.plugins.ssk-detecthandling.daos"] = "kong/plugins/ssk-detecthandling/daos.lua",
+      ["kong.plugins.ssk-detecthandling.handler"] = "kong/plugins/ssk-detecthandling/handler.lua",
+      ["kong.plugins.ssk-detecthandling.schema"] = "kong/plugins/ssk-detecthandling/schema.lua"
    }
 }

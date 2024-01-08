@@ -1,5 +1,5 @@
-package = "ssk-pm"
-version = "1.0.0-1"
+package = "ssk-safehost"
+version = "1.1.0-1"
 source = {
 	url = "https://github.com/cybersecuritycloud/sasanka.git"
 }
@@ -18,9 +18,9 @@ build = {
       ["kong.plugins.ssk-core.params"] = "kong/plugins/ssk-core/params.lua",
       ["kong.plugins.ssk-core.request"] = "kong/plugins/ssk-core/request.lua",
       ["kong.plugins.ssk-core.response"] = "kong/plugins/ssk-core/response.lua",
-      ["kong.plugins.ssk-pm.daos"] = "kong/plugins/ssk-pm/daos.lua",
-      ["kong.plugins.ssk-pm.handler"] = "kong/plugins/ssk-pm/handler.lua",
-      ["kong.plugins.ssk-pm.patternmatcher"] = "kong/plugins/ssk-pm/patternmatcher.lua",
-      ["kong.plugins.ssk-pm.schema"] = "kong/plugins/ssk-pm/schema.lua"
+      ["kong.plugins.ssk-core.response_body"] = "kong/plugins/ssk-core/response_body.lua",
+      ["kong.plugins.ssk-safehost.daos"] = "kong/plugins/ssk-safehost/daos.lua",
+      ["kong.plugins.ssk-safehost.handler"] = "kong/plugins/ssk-safehost/handler.lua",
+      ["kong.plugins.ssk-safehost.schema"] = "kong/plugins/ssk-safehost/schema.lua"
    }
 }
