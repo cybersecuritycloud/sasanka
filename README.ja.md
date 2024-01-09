@@ -1,4 +1,4 @@
-![logo](img/logo.png)
+![logo](img/logo_noclear.png)
 
 # 概要
 
