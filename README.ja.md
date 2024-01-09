@@ -1,4 +1,4 @@
-# README.ja
+![logo](img/logo.png)
 
 # 概要
 
