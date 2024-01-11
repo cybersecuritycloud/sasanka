@@ -76,7 +76,7 @@ Execute following.
 ```bash
 git clone https://github.com/cybersecuritycloud/sasanka.git
 cd sasanka
-luarocks install release/${PLUGIN_NAME}.${VERSIONS}.all.rock
+luarocks install rocks/${PLUGIN_NAME}.${VERSIONS}.all.rock
 ```
 
 And add your `kong.conf` ’s plugins item you want like following example. And then you must restart Kong.
@@ -205,29 +205,29 @@ Enable on Service Example
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -H "Content-Type: application/json"\
 		-d '{
-				"name": "ssk-detecthandling", 
-				"config": {
-					"filters" : [
-						{
-								"tag" : "status_401",
-								"status" : 401,
-						     "headers" : [ 
-										{"key": "CustomHeader", "value": "CustomValue" },
-				            {"key": "CustomHeader2", "value" : "CustomValue2" }
-				        ],
-				        "body" : "some error text"
-				        "default" : true, 
-						},
-						{
-								"tag" : "status409",
-								"status" : 409,
-						},
-						{
-								"tag" : "log"
-						}
-					]
-				}
-			}'
+			"name": "ssk-detecthandling", 
+			"config": {
+				"filters" : [
+					{
+						"tag" : "status_401",
+						"status" : 401,
+						"headers" : [ 
+							{"key": "CustomHeader", "value": "CustomValue" },
+							{"key": "CustomHeader2", "value" : "CustomValue2" }
+						],
+						"body" : "some error text",
+						"default" : true, 
+					},
+					{
+						"tag" : "status409",
+						"status" : 409
+					},
+					{
+						"tag" : "log"
+					}
+				]
+			}
+		}'
 ```
 
 | key | type | description | required | default value |
@@ -493,6 +493,7 @@ curl -i -X POST http://localhost:8001/plugins \
     - Need to `kong restart` after adding selected plugin to plugins in kong.conf
 - curl
 - python3 (>=3.6)
+	- pyyaml, requests
 - ( Core-Rule-Set v3.3.4 (automated Install in quickstart.sh) )
 
 ### Execute

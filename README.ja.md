@@ -71,7 +71,7 @@ sudo luarocks install lrexlib-pcre2
 ```bash
 git clone https://github.com/cybersecuritycloud/sasanka.git
 cd sasanka
-luarocks install release/${PLUGIN_NAME}${VERSIONS}.all.rock
+luarocks install rocks/${PLUGIN_NAME}${VERSIONS}.all.rock
 ```
 
 そして`kong.conf`のpluginsに下記を追加して、Kongを再起動します。
@@ -193,10 +193,30 @@ Enable on Service
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -H "Content-Type: application/json"\
-		-d '{"name": "ssk-detecthandling", \
-			"config": {"headers": [{"key": "x-gateway", "value": "sasanka-kong-gateway"}], \
-			"status": "441", \
-			"body": "detected by sasanka"}}'
+		-d '{
+			"name": "ssk-detecthandling", 
+			"config": {
+				"filters" : [
+					{
+						"tag" : "status_401",
+						"status" : 401,
+						"headers" : [ 
+							{"key": "CustomHeader", "value": "CustomValue" },
+							{"key": "CustomHeader2", "value" : "CustomValue2" }
+						],
+						"body" : "some error text",
+						"default" : true, 
+					},
+					{
+						"tag" : "status409",
+						"status" : 409
+					},
+					{
+						"tag" : "log"
+					}
+				]
+			}
+		}'
 ```
 
 | key | type | description | required | default value |
@@ -458,6 +478,7 @@ curl -i -X POST http://localhost:8001/plugins \
     - 全てのPluginをkong.confに追加してから `kong restart` を行う必要があります。
 - curl
 - python3 (>=3.6)
+	- pyyaml, requests
 
 ### Usage
 
