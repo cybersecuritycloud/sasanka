@@ -40,13 +40,15 @@ curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
 
 # config module
 echo -e "\n\nConfigure ssk-detecthandling\n"
-curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \
-    -H "Content-Type: application/json" \
-	-d '{"name": "ssk-detecthandling", 
-    "config": {"headers": [{"key": "x-gateway", "value": "sasanka-kong-gateway"}], 
-    "status": 441, 
-    "body": "detected "}}'
-
+curl -i -X POST http://localhost:8001/services/${SERVICENAME}/plugins \ 
+    -H "Content-Type: application/json" 
+    -d '{"name": "ssk-detecthandling", 
+        "config": {"filters" : 
+            [{"tag" : "status_401","status" : 401,"headers" : [ {"key": "CustomHeader", "value": "CustomValue" },{"key": "CustomHeader2", "value" : "CustomValue2" }],"body" : "blocked","default" : true},
+            {"tag" : "status409","status" : 409},
+            {"tag" : "log"}]
+            }
+        }'
 
 # config module
 # you can check the detected log in error.log
