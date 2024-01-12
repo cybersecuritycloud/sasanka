@@ -3,7 +3,7 @@
 
 # Overview
 
-Kong plugins to add WAF functionality to the Gateway to further improve the security of Kong Gateway.
+Kong plugins to add API Security functionality to the Gateway to further improve the security of Kong Gateway.
 
 Some plugins are provided as OSS, and users can choose to add the necessary functions.
 

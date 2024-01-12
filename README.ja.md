@@ -2,7 +2,7 @@
 
 # 概要
 
-Kong Gatewayの更なるセキュリティ向上のためWAFとしての機能をGatewayに追加するためのKongプラグイン。
+Kong Gatewayの更なるセキュリティ向上のためAPI Security機能をGatewayに追加するためのKongプラグイン。
 
 いくつかのプラグインをOSSで提供し、ユーザーの選択により必要な機能を追加することが可能。
 
