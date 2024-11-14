@@ -40,34 +40,34 @@ ffi.cdef[[
 const char* libinjection_sqli_fingerprint(struct libinjection_sqli_state* sql_state, int flags);
 
 struct libinjection_sqli_token {
-	char type;
-	char str_open;
-	char str_close;
-	size_t pos;
-	size_t len;
-	int count;
-	char val[32];
+        char type;
+        char str_open;
+        char str_close;
+        size_t pos;
+        size_t len;
+        int count;
+        char val[32];
 };
 
 typedef char (*ptr_lookup_fn)(struct libinjection_sqli_state*, int lookuptype, const char* word, size_t len);
 
 struct libinjection_sqli_state {
-	const char *s;
-	size_t slen;
-	ptr_lookup_fn lookup;
-	void* userdata;
-	int flags;
-	size_t pos;
-	struct libinjection_sqli_token tokenvec[8];
-	struct libinjection_sqli_token *current;
-	char fingerprint[8];
-	int reason;
-	int stats_comment_ddw;
-	int stats_comment_ddx;
-	int stats_comment_c;
-	int stats_comment_hash;
-	int stats_folds;
-	int stats_tokens;
+        const char *s;
+        size_t slen;
+        ptr_lookup_fn lookup;
+        void* userdata;
+        int flags;
+        size_t pos;
+        struct libinjection_sqli_token tokenvec[8];
+        struct libinjection_sqli_token *current;
+        char fingerprint[8];
+        int reason;
+        int stats_comment_ddw;
+        int stats_comment_ddx;
+        int stats_comment_c;
+        int stats_comment_hash;
+        int stats_folds;
+        int stats_tokens;
 };
 
 void libinjection_sqli_init(struct libinjection_sqli_state * sf, const char *s, size_t len, int flags);
@@ -86,47 +86,47 @@ local lib, loaded
 
 -- "borrowed" from CF aho-corasick lib
 local function _loadlib()
-	if (not loaded) then
-		local path, so_path
-		local libname = "libinjection.so"
+        if (not loaded) then
+                local path, so_path
+                local libname = "libinjection.so"
 
-		for k, v in string.gmatch(package.cpath, "[^;]+") do
-			so_path = string.match(k, "(.*/)")
-			if so_path then
-				-- "so_path" could be nil. e.g, the dir path component is "."
-				so_path = so_path .. libname
+                for k, v in string.gmatch(package.cpath, "[^;]+") do
+                        so_path = string.match(k, "(.*/)")
+                        if so_path then
+                                -- "so_path" could be nil. e.g, the dir path component is "."
+                                so_path = so_path .. libname
 
-				-- Don't get me wrong, the only way to know if a file exist is
-				-- trying to open it.
-				local f = io.open(so_path)
-				if f ~= nil then
-					io.close(f)
-					path = so_path
-					break
-				end
-			end
-		end
+                                -- Don't get me wrong, the only way to know if a file exist is
+                                -- trying to open it.
+                                local f = io.open(so_path)
+                                if f ~= nil then
+                                        io.close(f)
+                                        path = so_path
+                                        break
+                                end
+                        end
+                end
 
-		if not path then
-			return false
-		end
+                if not path then
+                        return false
+                end
 
-		lib = ffi.load(path)
+                lib = ffi.load(path)
 
-		if (lib) then
-			loaded = true
-			return true
-		else
-			return false
-		end
-	else
-		return true
-	end
+                if (lib) then
+                        loaded = true
+                        return true
+                else
+                        return false
+                end
+        else
+                return true
+        end
 end
 
 -- this function is not publicly exposed so we need to emulate it here. not great but not a measurable perf hit
 local function _reparse_as_mysql(sqli_state)
-	return sqli_state[0].stats_comment_ddx ~= 0 or sqli_state[0].stats_comment_hash ~= 0
+        return sqli_state[0].stats_comment_ddx ~= 0 or sqli_state[0].stats_comment_hash ~= 0
 end
 
 --[[
@@ -136,103 +136,103 @@ Secondary API: detects SQLi in a string, given a context. Given a string, return
 * SQLi fingerprint
 --]]
 local function _sqli_contextwrapper(string, char, flag1, flag2)
-	if (char and not string.find(string, char, 1, true)) then
-		return false, nil
-	end
+        if (char and not string.find(string, char, 1, true)) then
+                return false, nil
+        end
 
-	if (not loaded) then
-		if (not _loadlib()) then
-			return false, nil
-		end
-	end
+        if (not loaded) then
+                if (not _loadlib()) then
+                        return false, nil
+                end
+        end
 
-	local issqli, lookup, sqli_state
+        local lookup, sqli_state
 
-	-- allocate a new libinjection_sqli_state struct
-	sqli_state = ffi_new(state_type)
+        -- allocate a new libinjection_sqli_state struct
+        sqli_state = ffi_new(state_type)
 
-	-- init the state
-	lib.libinjection_sqli_init(
-		sqli_state,
-		string,
-		#string,
-		FLAG_NONE
-	)
+        -- init the state
+        lib.libinjection_sqli_init(
+                sqli_state,
+                string,
+                #string,
+                FLAG_NONE
+        )
 
-	-- initial fingerprint
-	lib.libinjection_sqli_fingerprint(
-		sqli_state,
-		flag1
-	)
+        -- initial fingerprint
+        lib.libinjection_sqli_fingerprint(
+                sqli_state,
+                flag1
+        )
 
-	-- lookup
-	lookup = sqli_state[0].lookup(
-		sqli_state,
-		LOOKUP_FINGERPRINT,
-		sqli_state[0].fingerprint,
-		#ffi.string(sqli_state[0].fingerprint)
-	)
+        -- lookup
+        lookup = sqli_state[0].lookup(
+                sqli_state,
+                LOOKUP_FINGERPRINT,
+                sqli_state[0].fingerprint,
+                #ffi.string(sqli_state[0].fingerprint)
+        )
 
-	-- match? great, we're done
-	if (lookup > 0) then
-		return true, ffi_string(sqli_state[0].fingerprint)
-	end
+        -- match? great, we're done
+        if (lookup > 0) then
+                return true, ffi_string(sqli_state[0].fingerprint)
+        end
 
-	-- no? reparse, fingerprint and lookup again
-	if (flag2 and _reparse_as_mysql(sqli_state)) then
-		lib.libinjection_sqli_fingerprint(
-			sqli_state,
-			flag2
-		)
+        -- no? reparse, fingerprint and lookup again
+        if (flag2 and _reparse_as_mysql(sqli_state)) then
+                lib.libinjection_sqli_fingerprint(
+                        sqli_state,
+                        flag2
+                )
 
-		lookup = sqli_state[0].lookup(
-			sqli_state,
-			LOOKUP_FINGERPRINT,
-			sqli_state[0].fingerprint,
-			#ffi.string(sqli_state[0].fingerprint)
-		)
+                lookup = sqli_state[0].lookup(
+                        sqli_state,
+                        LOOKUP_FINGERPRINT,
+                        sqli_state[0].fingerprint,
+                        #ffi.string(sqli_state[0].fingerprint)
+                )
 
-		if (lookup > 0) then
-			return true, ffi_string(sqli_state[0].fingerprint)
-		end
-	end
+                if (lookup > 0) then
+                        return true, ffi_string(sqli_state[0].fingerprint)
+                end
+        end
 
-	return false, nil
+        return false, nil
 end
 
 --[[
 Wrapper for second-level API with no char context
 --]]
 function _M.sqli_noquote(string)
-	return _sqli_contextwrapper(
-		string,
-		nil,
-		QUOTE_NONE_SQL_ANSI,
-		QUOTE_NONE_SQL_MYSQL
-	)
+        return _sqli_contextwrapper(
+                string,
+                nil,
+                QUOTE_NONE_SQL_ANSI,
+                QUOTE_NONE_SQL_MYSQL
+        )
 end
 
 --[[
 Wrapper for second-level API with CHAR_SINGLE context
 --]]
 function _M.sqli_singlequote(string)
-	return _sqli_contextwrapper(
-		string,
-		"'",
-		QUOTE_SINGLE_SQL_ANSI,
-		QUOTE_SINGLE_SQL_MYSQL
-	)
+        return _sqli_contextwrapper(
+                string,
+                "'",
+                QUOTE_SINGLE_SQL_ANSI,
+                QUOTE_SINGLE_SQL_MYSQL
+        )
 end
 
 --[[
 Wrapper for second-level API with CHAR_DOUBLE context
 --]]
 function _M.sqli_doublequote(string)
-	return _sqli_contextwrapper(
-		string,
-		'"',
-		QUOTE_DOUBLE_SQL_MYSQL
-	)
+        return _sqli_contextwrapper(
+                string,
+                '"',
+                QUOTE_DOUBLE_SQL_MYSQL
+        )
 end
 
 --[[
@@ -242,91 +242,91 @@ Simple API. Given a string, returns a list of
 * SQLi fingerprint
 --]]
 function _M.sqli(string)
-	if (not loaded) then
-		if (not _loadlib()) then
-			return false, nil
-		end
-	end
+        if (not loaded) then
+                if (not _loadlib()) then
+                        return false, nil
+                end
+        end
 
-	local fingerprint = ffi_new("char [8]")
+        local fingerprint = ffi_new("char [8]")
 
-	return lib.libinjection_sqli(string, #string, fingerprint) == 1, ffi_string(fingerprint)
+        return lib.libinjection_sqli(string, #string, fingerprint) == 1, ffi_string(fingerprint)
 end
 
 --[[
 Secondary API: detects XSS in a string, given a context. Given a string, returns a boolean denoting if XSS was detected
 --]]
 local function _xss_contextwrapper(string, flag)
-	if (not loaded) then
-		if (not _loadlib()) then
-			return false
-		end
-	end
+        if (not loaded) then
+                if (not _loadlib()) then
+                        return false
+                end
+        end
 
-	return lib.libinjection_is_xss(string, #string, flag) == 1
+        return lib.libinjection_is_xss(string, #string, flag) == 1
 end
 
 --[[
 Wrapper for second-level API with DATA_STATE flag
 --]]
 function _M.xss_data_state(string)
-	return _xss_contextwrapper(
-		string,
-		DATA_STATE
-	)
+        return _xss_contextwrapper(
+                string,
+                DATA_STATE
+        )
 end
 
 --[[
 Wrapper for second-level API with VALUE_NO_QUOTE flag
 --]]
 function _M.xss_noquote(string)
-	return _xss_contextwrapper(
-		string,
-		VALUE_NO_QUOTE
-	)
+        return _xss_contextwrapper(
+                string,
+                VALUE_NO_QUOTE
+        )
 end
 
 --[[
 Wrapper for second-level API with VALUE_SINGLE_QUOTE flag
 --]]
 function _M.xss_singlequote(string)
-	return _xss_contextwrapper(
-		string,
-		VALUE_SINGLE_QUOTE
-	)
+        return _xss_contextwrapper(
+                string,
+                VALUE_SINGLE_QUOTE
+        )
 end
 
 --[[
 Wrapper for second-level API with VALUE_DOUBLE_QUOTE flag
 --]]
 function _M.xss_doublequote(string)
-	return _xss_contextwrapper(
-		string,
-		VALUE_DOUBLE_QUOTE
-	)
+        return _xss_contextwrapper(
+                string,
+                VALUE_DOUBLE_QUOTE
+        )
 end
 
 --[[
 Wrapper for second-level API with VALUE_BACK_QUOTE flag
 --]]
 function _M.xss_backquote(string)
-	return _xss_contextwrapper(
-		string,
-		VALUE_BACK_QUOTE
-	)
+        return _xss_contextwrapper(
+                string,
+                VALUE_BACK_QUOTE
+        )
 end
 
 --[[
 ALPHA version of XSS detector. Given a string, returns a boolean denoting if XSS was detected
 --]]
 function _M.xss(string)
-	if (not loaded) then
-		if (not _loadlib()) then
-			return false
-		end
-	end
+        if (not loaded) then
+                if (not _loadlib()) then
+                        return false
+                end
+        end
 
-	return lib.libinjection_xss(string, #string) == 1
+        return lib.libinjection_xss(string, #string) == 1
 end
 
 
@@ -335,12 +335,12 @@ end
 --------------------------
 
 function _M.try_load()
-	if (not loaded) then
-		if (not _loadlib()) then
-			return false
-		end
-	end
-	return true
+        if (not loaded) then
+                if (not _loadlib()) then
+                        return false
+                end
+        end
+        return true
 end
 
 return _M
