@@ -186,7 +186,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 ### ssk-detecthandling
 
-ssk-* Pluginで検知された場合にResponseを設定値に変更する。
+ssk-* Pluginで検知された場合のレスポンスをコントロールします。例えば、カスタムレスポンスを返したり、レスポンを遅延する、あるいはログを吐き出すのみに設定することができます。
 
 Enable on Service
 
@@ -213,6 +213,10 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 					},
 					{
 						"tag" : "log"
+					},
+					{
+						"delay": 60,
+						"tag" : "delay"
 					}
 				]
 			}
@@ -226,6 +230,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | config.filters[i].status | integer | 検知した際のresponse statusを設定します。 | - |  |
 | config.filters[i].headers | array of table elements | 検知した際のresponse headersをkey-value形式で設定します。 | - |  |
 | config.filters[i].body | string | 検知した際のresponse body を設定します。 | - |  |
+| config.filters[i].delay | integer | 検知した際にresponseを遅延します。 | - |  |
 | config.filters[i].default | boolean | 検知した際のPluginのtagがこのPlugin上に存在しない場合の動作を設定します。 | - |  |
 
 ### ssk-std-logger

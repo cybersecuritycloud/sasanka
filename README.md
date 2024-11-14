@@ -197,7 +197,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 ### ssk-detecthandling
 
-Change Response to set value when detected by ssk-* Plugin.
+Handle response when detected by ssk-* Plugin. For example, you can set configure custom response, delay response or only output logs.
 
 Enable on Service Example
 
@@ -224,6 +224,10 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 					},
 					{
 						"tag" : "log"
+					},
+					{
+						"delay": 60,
+						"tag" : "delay"
 					}
 				]
 			}
@@ -237,6 +241,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | config.filters[i].status | integer | Sets the response status when detected. | - |  |
 | config.filters[i].headers | array of table elements | Sets the response headers in key-value format when detected. | - |  |
 | config.filters[i].body | string | Sets the response body when detected. | - |  |
+| config.filters[i].delay | integer | Delay the response body when detected. | - |  |
 | config.filters[i].default | boolean | When a Plugin is detected and tag of plugin is not configured on this plugin,  default is performed. | - |  |
 
 ### ssk-std-logger
