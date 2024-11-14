@@ -12,8 +12,8 @@ local type_param_info = {
         fields = {
                 { ["in"] = { type = "string", default = "param_req_*", }},
                 { key = { type = "string", default = "*", }},
-		{ prefix = { type = "string" }},
-	}
+                { prefix = { type = "string" }},
+        }
 }
 local type_param_info_array = {
         type = "array",
@@ -30,10 +30,9 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
-		{ ["tags"] = type_string_array },
-		{ paths = type_string_array },
-		{ params = type_param_info_array },
-	},
+                { ["tags"] = type_string_array },
+                { params = type_param_info_array },
+        },
         entity_checks = {
           -- add some validation rules across fields
         },
