@@ -1,6 +1,6 @@
 local typedefs = require "kong.db.schema.typedefs"
 
-local PLUGIN_NAME = "ssk-strictparameter"
+local PLUGIN_NAME = "ssk-allowkey"
 
 
 local type_string_array = {
