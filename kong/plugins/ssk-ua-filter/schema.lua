@@ -2,7 +2,6 @@ local typedefs = require "kong.db.schema.typedefs"
 
 local PLUGIN_NAME = "ssk-ua-filter"
 
-local type_string = { type = "string" }
 local type_string_array = {
         type = "array",
         elements = { type = "string" }
@@ -18,10 +17,10 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
-		{ ["tags"] = type_string_array },
-		{ block_useragents = type_string_array },
-		{ block_no_useragent = { type = "boolean" }  },
-	},
+                { ["tags"] = type_string_array },
+                { block_useragents = type_string_array },
+                { block_no_useragent = { type = "boolean" }  },
+        },
         entity_checks = {
           -- add some validation rules across fields
         },
