@@ -236,31 +236,39 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 ### ssk-std-logger
 
 ssk-* Pluginで検知された場合に検知した内容を標準出力する。
+log lengthの最大は8192[Byte]です
 
 Enable on Service
 
 ```bash
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d "name=ssk-std-logger" \
-    -d "config.std=out"
+    -d "config.std=out" \
+	-d "config.header=[ssk-detect]"
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
 | config.std | string | 検知ログの出力先を設定する。out or err を設定でき、標準出力または標準エラー出力で設定する。 | true | - |
 | config.header | string | parsingに利用するlog headerを設定します。 | - | [ssk-detect] |
+| config.encode | string | logに対して行うencodeのtypeを指定します。 |  | none |
 
 ### Default Log Format
 
 ```yaml
-[header] {[plugin_id] [argument]}
+[header] {[route_id] [host] [remote] [tags] [details] [detect_code] [time]}
 ```
 
-### Log Id
+#### Example
+```json
+[header]{"route_id": "421df401-b471-4a6b-82e4-c12ea03a1780", "host": "example.com", "remote": "20.100.47.117",  "details" : {"fingerprint" : "s&1c", "decoded" : "\' or 1 = 1 -- ", "value" : "\' or 1 = 1 -- ", "key" : "somekey"}, "detect_code" : 1301, "tags" : ["libinjection", "code_401"], "time": "2024-11-13T16:58:00"}
+```
+
+### Detect code
 
 ssk-std-loggerから出力された検知ログは以下のルールIDで管理される。
 
-| Log Id | Detected by |
+| Detect code | Detected by |
 | --- | --- |
 | 200 | ssk-pm |
 | 300 | ssk-safehost |

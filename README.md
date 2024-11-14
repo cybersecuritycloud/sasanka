@@ -247,6 +247,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 ### ssk-std-logger
 
 Standard output of what is detected when detected by the ssk-* Plugins.
+Max log length is 8192 Byte.
 
 Enable on Service Example
 
@@ -254,25 +255,32 @@ Enable on Service Example
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d "name=ssk-std-logger" \
     -d "config.std=out" \
-		-d "config.header=[ssk-detect]"
+	-d "config.header=[ssk-detect]"
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
 | config.std | string | Select out or err for where to output detected log. | true |  |
 | config.header | string | You can set to specify log header. |  | [ssk-detect] |
+| config.encode | string | You can set log encoding type. |  | none |
 
 ### Default Log Format
 
 ```yaml
-[header] {[plugin_id] [argument]}
+[header] {[route_id] [host] [remote] [tags] [details] [detect_code] [time]}
 ```
 
-### Log Id
+#### Example
+```json
+[header]{"route_id": "421df401-b471-4a6b-82e4-c12ea03a1780", "host": "example.com", "remote": "20.100.47.117",  "details" : {"fingerprint" : "s&1c", "decoded" : "\' or 1 = 1 -- ", "value" : "\' or 1 = 1 -- ", "key" : "somekey"}, "detect_code" : 1301, "tags" : ["libinjection", "code_401"], "time": "2024-11-13T16:58:00"}
+```
+
+
+### detect code
 
 The detection logs output from ssk-std-logger are managed by the following our IDs.
 
-| Log Id | Detected by |
+| Detect code | Detected by |
 | --- | --- |
 | 200 | ssk-pm |
 | 300 | ssk-safehost |
