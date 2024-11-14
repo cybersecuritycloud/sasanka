@@ -19,9 +19,9 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
-		{ ["tags"] = type_string_array },
-		{ host_check = type_string },
-	},
+                { ["tags"] = type_string_array },
+                { host_check = type_string },
+        },
         entity_checks = {
           -- add some validation rules across fields
         },
