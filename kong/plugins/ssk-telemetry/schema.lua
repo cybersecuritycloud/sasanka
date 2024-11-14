@@ -14,10 +14,10 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
-		{ std = { type = "string", one_of = { "out", "err" },  default = "out" }},
-		{ tag = { type = "string" }},
-		{ header = { type = "string" }},
-	},
+                { std = { type = "string", one_of = { "out", "err" },  default = "out" }},
+                { tag = { type = "string" }},
+                { header = { type = "string" }},
+        },
         entity_checks = {
           -- add some validation rules across fields
         },
