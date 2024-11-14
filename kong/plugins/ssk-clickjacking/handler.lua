@@ -1,6 +1,4 @@
-local table = require "table"
 local core = require "kong.plugins.ssk-core.core"
-local util = require "kong.plugins.ssk-core.lib.utils"
 
 local function add_header( k, subj )
 	if subj then
