@@ -126,9 +126,15 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | config.patterns[i].name | string | Defines the name of the pattern to be set. | - | nil |
 | config.patterns[i].patterns | array of string elements | Set pattern rules as an array. | - | nil |
 | config.params | array of table elements | Defines where the configured pattern will be applied. | - | table |
-| config.params[i].in | string | Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].Select one of them or use "*" or null to apply all params. | - | nil |
-| config.params[i].key | string | Define the parameter key to apply detection.If "*" or null, all parameter keys are applied. | - | nil |
+| config.params[i].in | string | <b>Deprecated.</b> Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].Select one of them or use "*" or null to apply all params. | - | nil |
+| config.params[i].key | string | <b>Deprecated.</b>  Define the parameter key to apply detection.If "*" or null, all parameter keys are applied. | - | nil |
 | config.params[i].patterns | array of string elements | Define the pattern to be applied among the patterns defined in config.patterns. | - | nil |
+| config.params[i].customize | table elements | Define the pattern to be applied among the patterns defined in config.patterns. | - | nil |
+| config.params[i].customize.in | array of string | Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].Select one of them or use ["*"] or null to apply all params.| - | nil |
+| config.params[i].customize.key | array of string | Define the parameter key to apply detection.If ["*"] or null, all parameter keys are applied. | - | nil |
+| config.params[i].customize.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | nil |
+
+The customize field is used to fine-tune the target sections and tags for each specified pattern in the patterns field.
 
 ### ssk-safehost
 

@@ -115,9 +115,16 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | config.patterns[i].name | string | 設定するパターンの名前を定義します。 | - | nil |
 | config.patterns[i].patterns | array of string elements | パターンを配列で設定します。 | - | nil |
 | config.params | array of table elements | 設定したパターンの適用場所を定義します。 | - | table |
-| config.params[i].in | string | 検知をかける項目を定義します。[”param_req_query”, “param_req_path”, “param_req_body”]の中から選択するか、”*” or nullだと全てのparamが適用されます。 | - | nil |
-| config.params[i].key | string | 検知をかけるparameter keyを定義します。”*”か null だと全てのparameter keyが適用されます。 | - | nil |
+| config.params[i].in | string | <b>非推奨</b>。検知をかける項目を定義します。[”param_req_query”, “param_req_path”, “param_req_body”]の中から選択するか、”*” or nullだと全てのparamが適用されます。 | - | nil |
+| config.params[i].key | string | <b>非推奨</b>。検知をかけるparameter keyを定義します。”*”か null だと全てのparameter keyが適用されます。 | - | nil |
 | config.params[i].patterns | array of string elements | config.patternsで定義したpatternのうち、適用するパターンを定義します。 | - | nil |
+| config.params[i].customize | table elements | Define the pattern to be applied among the patterns defined in config.patterns. | - | nil |
+| config.params[i].customize.in | array of string | 検知をかける項目を定義します。[”param_req_query”, “param_req_path”, “param_req_body”]の中から選択するか、[”*”] or nullだと全てのparamが適用されます。| - | nil |
+| config.params[i].customize.key | array of string | 検知をかけるparameter keyを定義します。[”*”]か null だと全てのparameter keyが適用されます。 | - | nil |
+| config.params[i].customize.tags | array of string | patternsにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます | - | nil |
+
+
+ customizeフィールドはそこに指定されたpatternsに対して、patternsごとに対象箇所やtagsを細かく調整するためのフィールドになります
 
 ### ssk-safehost
 
