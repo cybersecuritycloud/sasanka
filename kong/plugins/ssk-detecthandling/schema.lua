@@ -3,11 +3,11 @@ local typedefs = require "kong.db.schema.typedefs"
 local PLUGIN_NAME = "ssk-detecthandling"
 
 local type_header = {
-	type = "record",
+        type = "record",
         fields = {
-		{ key = { type = "string" }},
-		{ value = { type = "string" }}, 
-	}
+                { key = { type = "string", required = true }},
+                { value = { type = "string", required = true }},
+        }
 }
 
 local type_header_array = {
@@ -16,19 +16,20 @@ local type_header_array = {
 }
 
 local type_filter = {
-	type = "record",
+        type = "record",
         fields = {
-		{ default = { type = "boolean" }},
-                { tag = { type = "string" }},  
-		{ status = { type = "number" }},  
+                { default = { type = "boolean" }},
+                { tag = { type = "string" }},
+                { status = { type = "number" }},
                 { headers = type_header_array },
-                { body = { type = "string" }},  
-	}
+                { body = { type = "string" }},
+                { delay = { type = "number", default = 0, between = {0, 60} }},
+        }
 }
 
 local type_filter_array = {
         type = "array",
-        elements = type_filter,		
+        elements = type_filter,
 }
 
 local schema = {
@@ -41,8 +42,8 @@ local schema = {
         -- The 'config' record is the custom part of the plugin schema
         type = "record",
         fields = {
-		{ filters = type_filter_array },
-	},
+                { filters = type_filter_array },
+        },
         entity_checks = {
           -- add some validation rules across fields
         },

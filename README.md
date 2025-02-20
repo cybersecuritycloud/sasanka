@@ -25,6 +25,7 @@ Some plugins are provided as OSS, and users can choose to add the necessary func
 | ssk-strictparameter | Strict and Validate Parameters | Validating params like JSON Schema and it can also restrict value to prevent MassAssignment for example. |
 | ssk-telemetry | Output Telemetry | Output telemetry to stdout or stderr. Telemetry means metrics of latency, count |
 | ssk-allowkey | Restrict parameter containing any key | Restrict each parameter containing any key to prevent MassAssignment, one of OWASP Top 10. |
+| ssk-magika | MIME type validation with Magika | This feature ensures that files uploaded utilizing [magika](https://github.com/google/magika) conform to the expected format, rather than relying solely on the file extension. |
 
 These plugins are **not compatible** with DB-less mode.
 
@@ -126,9 +127,15 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | config.patterns[i].name | string | Defines the name of the pattern to be set. | - | nil |
 | config.patterns[i].patterns | array of string elements | Set pattern rules as an array. | - | nil |
 | config.params | array of table elements | Defines where the configured pattern will be applied. | - | table |
-| config.params[i].in | string | Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].Select one of them or use "*" or null to apply all params. | - | nil |
-| config.params[i].key | string | Define the parameter key to apply detection.If "*" or null, all parameter keys are applied. | - | nil |
+| config.params[i].in | string | <b>Deprecated.</b> Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].Select one of them or use "*" or null to apply all params. | - | nil |
+| config.params[i].key | string | <b>Deprecated.</b>  Define the parameter key to apply detection.If "*" or null, all parameter keys are applied. | - | nil |
 | config.params[i].patterns | array of string elements | Define the pattern to be applied among the patterns defined in config.patterns. | - | nil |
+| config.params[i].customize | table elements | Define the pattern to be applied among the patterns defined in config.patterns. | - | nil |
+| config.params[i].customize.in | array of string | Defines the item to apply detection to. ["param_req_query", "param_req_path", “param_req_header”, “param_req_cookie”,  "param_req_body", “param_req_*”, “param_res_header”, “param_res_*”].Select one of them or use ["*"] or null to apply all params.| - | nil |
+| config.params[i].customize.key | array of string | Define the parameter key to apply detection.If ["*"] or null, all parameter keys are applied. | - | nil |
+| config.params[i].customize.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | nil |
+
+The customize field is used to fine-tune the target sections and tags for each specified pattern in the patterns field.
 
 ### ssk-safehost
 
@@ -197,7 +204,7 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 
 ### ssk-detecthandling
 
-Change Response to set value when detected by ssk-* Plugin.
+Handle response when detected by ssk-* Plugin. For example, you can set configure custom response, delay response or only output logs.
 
 Enable on Service Example
 
@@ -224,6 +231,10 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 					},
 					{
 						"tag" : "log"
+					},
+					{
+						"delay": 60,
+						"tag" : "delay"
 					}
 				]
 			}
@@ -237,11 +248,13 @@ curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
 | config.filters[i].status | integer | Sets the response status when detected. | - |  |
 | config.filters[i].headers | array of table elements | Sets the response headers in key-value format when detected. | - |  |
 | config.filters[i].body | string | Sets the response body when detected. | - |  |
+| config.filters[i].delay | integer | Delay the response body when detected. | - |  |
 | config.filters[i].default | boolean | When a Plugin is detected and tag of plugin is not configured on this plugin,  default is performed. | - |  |
 
 ### ssk-std-logger
 
 Standard output of what is detected when detected by the ssk-* Plugins.
+Max log length is 8192 Byte.
 
 Enable on Service Example
 
@@ -249,25 +262,32 @@ Enable on Service Example
 curl -i -X POST http://localhost:8001/services/SERVICE_NAME|SERVICE_ID/plugins \
     -d "name=ssk-std-logger" \
     -d "config.std=out" \
-		-d "config.header=[ssk-detect]"
+	-d "config.header=[ssk-detect]"
 ```
 
 | key | type | description | required | default value |
 | --- | --- | --- | --- | --- |
 | config.std | string | Select out or err for where to output detected log. | true |  |
 | config.header | string | You can set to specify log header. |  | [ssk-detect] |
+| config.encode | string | You can set log encoding type. |  | none |
 
 ### Default Log Format
 
 ```yaml
-[header] {[plugin_id] [argument]}
+[header] {[route_id] [host] [remote] [tags] [details] [detect_code] [time]}
 ```
 
-### Log Id
+#### Example
+```json
+[header]{"route_id": "421df401-b471-4a6b-82e4-c12ea03a1780", "host": "example.com", "remote": "20.100.47.117",  "details" : {"fingerprint" : "s&1c", "decoded" : "\' or 1 = 1 -- ", "value" : "\' or 1 = 1 -- ", "key" : "somekey"}, "detect_code" : 1301, "tags" : ["libinjection", "code_401"], "time": "2024-11-13T16:58:00"}
+```
+
+
+### detect code
 
 The detection logs output from ssk-std-logger are managed by the following our IDs.
 
-| Log Id | Detected by |
+| Detect code | Detected by |
 | --- | --- |
 | 200 | ssk-pm |
 | 300 | ssk-safehost |
@@ -482,6 +502,40 @@ curl -i -X POST http://localhost:8001/plugins \
 | config.header | array of string | You can set header parameter key to allow. If this key is not configured or value is nil, all header parameter key will be allowed.If value is empty array, [], all header parameter will be denied. | - | nil |
 | config.cookie | array of string | You can set cookie parameter key to allow. If this key is not configured or value is nil, all cookie parameter key will be allowed.If value is empty array, [], all cookie parameter will be denied. | - | nil |
 | config.body | array of string | You can set body parameter key to allow. If this key is not configured or value is nil, all body parameter key will be allowed.If value is empty array, [], all body parameter will be denied. | - | nil |
+
+
+### ssk-magika
+We have implemented a file MIME type validation feature using Magika. This functionality ensures that uploaded files conform to the expected formats by detecting their actual MIME types rather than relying solely on file extensions.
+
+This feature adds an extra layer of security and robustness to our file handling process, ensuring safer and more reliable operations.
+magika's label is set to [standard_v2_1](https://github.com/google/magika/blob/main/assets/models/standard_v2_1/README.md).
+
+Enable on Service Example
+
+```bash
+curl -i -X POST http://localhost:8001/plugins \
+    -H "Content-Type: application/json" \
+    -d '{
+			"name": "ssk-magika",
+			"config": {
+				"tags": ["magika_detected"],
+				"allows" : ["txt", "html"],
+				"params" : [
+					{
+						"in": "param_req_body",
+					}
+				]
+			}
+		}'
+```
+
+| key | type | description | required | default value |
+| --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
+| config.denys | array of string | Define the labels to be denied. | true |  |
+| config.allows | array of string | Define the labels to be allowed. Meaning that all other labels except for those allowed are to be detected.  | true |  |
+| config.params[].in | string | Defines the item to apply detection to. [ “param_req_body”, "req_body"].Select one of them | true |  |
+| config.params[].key | string | Define the parameter key to apply detection. | true |  |
 
 ---
 
