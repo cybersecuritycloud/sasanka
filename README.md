@@ -25,6 +25,7 @@ Some plugins are provided as OSS, and users can choose to add the necessary func
 | ssk-strictparameter | Strict and Validate Parameters | Validating params like JSON Schema and it can also restrict value to prevent MassAssignment for example. |
 | ssk-telemetry | Output Telemetry | Output telemetry to stdout or stderr. Telemetry means metrics of latency, count |
 | ssk-allowkey | Restrict parameter containing any key | Restrict each parameter containing any key to prevent MassAssignment, one of OWASP Top 10. |
+| ssk-magika | MIME type validation with Magika | This feature ensures that files uploaded utilizing [magika](https://github.com/google/magika) conform to the expected format, rather than relying solely on the file extension. |
 
 These plugins are **not compatible** with DB-less mode.
 
@@ -501,6 +502,40 @@ curl -i -X POST http://localhost:8001/plugins \
 | config.header | array of string | You can set header parameter key to allow. If this key is not configured or value is nil, all header parameter key will be allowed.If value is empty array, [], all header parameter will be denied. | - | nil |
 | config.cookie | array of string | You can set cookie parameter key to allow. If this key is not configured or value is nil, all cookie parameter key will be allowed.If value is empty array, [], all cookie parameter will be denied. | - | nil |
 | config.body | array of string | You can set body parameter key to allow. If this key is not configured or value is nil, all body parameter key will be allowed.If value is empty array, [], all body parameter will be denied. | - | nil |
+
+
+### ssk-magika
+We have implemented a file MIME type validation feature using Magika. This functionality ensures that uploaded files conform to the expected formats by detecting their actual MIME types rather than relying solely on file extensions.
+
+This feature adds an extra layer of security and robustness to our file handling process, ensuring safer and more reliable operations.
+magika's label is set to [standard_v2_1](https://github.com/google/magika/blob/main/assets/models/standard_v2_1/README.md).
+
+Enable on Service Example
+
+```bash
+curl -i -X POST http://localhost:8001/plugins \
+    -H "Content-Type: application/json" \
+    -d '{
+			"name": "ssk-magika",
+			"config": {
+				"tags": ["magika_detected"],
+				"allows" : ["txt", "html"],
+				"params" : [
+					{
+						"in": "param_req_body",
+					}
+				]
+			}
+		}'
+```
+
+| key | type | description | required | default value |
+| --- | --- | --- | --- | --- |
+| config.tags | array of string | You can set any tags. This tag can be used for ssk-detecthandling and so on. | - | [] |
+| config.denys | array of string | Define the labels to be denied. | true |  |
+| config.allows | array of string | Define the labels to be allowed. Meaning that all other labels except for those allowed are to be detected.  | true |  |
+| config.params[].in | string | Defines the item to apply detection to. [ “param_req_body”, "req_body"].Select one of them | true |  |
+| config.params[].key | string | Define the parameter key to apply detection. | true |  |
 
 ---
 

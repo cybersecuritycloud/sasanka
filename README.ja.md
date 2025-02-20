@@ -24,6 +24,7 @@ Kong Gatewayの更なるセキュリティ向上のためAPI Security機能をGa
 | ssk-strictparameter | Strict and Validate Parameters | パラメータの型や値域を制限することができます。 |
 | ssk-telemetry | Output Telemetry | 標準出力or標準エラー出力にレイテンシやリクエストカウントなどのメトリクスを出力します。 |
 | ssk-allowkey | Restrict parameter containing any key | 各パラメータのkeyをホワイトリスト形式で制限します。このPluginはOWASP Top10のMassAssignmentの防止になります。 |
+| ssk-magika | MIME type validation with magika | [magika](https://github.com/google/magika)を使用したファイルの MIME タイプ検証を行います|
 
 このPlugin はDB-lessモードでは**動作しません**。
 
@@ -487,6 +488,41 @@ curl -i -X POST http://localhost:8001/plugins \
 | config.header | array of string | 許可するheaderパラメータのkeyを設定します。このkey(header)が設定に含まれていない、またはnilの場合、全てのheaderパラメータkeyが許可されます。空リストが設定されている場合、全てのheaderパラメータのkeyが拒否されます | - | nil |
 | config.cookie | array of string | 許可するcookieパラメータのkeyを設定します。このkey(cookie)が設定に含まれていない、またはnilの場合、全てのcookieパラメータkeyが許可されます。空リストが設定されている場合、全てのcookieパラメータのkeyが拒否されます | - | nil |
 | config.body | array of string | 許可するbodyパラメータのkeyを設定します。このkey(body)が設定に含まれていない、またはnilの場合、全てのbodyパラメータkeyが許可されます。空リストが設定されている場合、全てのbodyパラメータのkeyが拒否されます | - | nil |
+
+
+### ssk-magika
+[magika](https://github.com/google/magika)を使用したファイルの MIME タイプ検証機能を実装しました。この機能により、ファイルの拡張子のみに依存せず、実際の MIME タイプを検出することで、アップロードされたファイルが想定された形式に適合していることを確認できます。
+
+この機能は、ファイル処理プロセスのセキュリティと堅牢性を強化し、より安全で信頼性の高い運用を実現します。
+magikaのラベルは[standard_v2_1](https://github.com/google/magika/blob/main/assets/models/standard_v2_1/README.md)に設定されています。
+
+Enable on Service Example
+
+```bash
+curl -i -X POST http://localhost:8001/plugins \
+    -H "Content-Type: application/json" \
+    -d '{
+			"name": "ssk-magika",
+			"config": {
+				"tags": ["magika_detected"],
+				"denys" : ["txt", "html", "javascript", "png"],
+				"params" : [
+					{
+						"in": "param_req_body",
+					}
+				]
+			}
+		}'
+```
+
+| key | type | description | required | default value |
+| --- | --- | --- | --- | --- |
+| config.tags | array of string | Pluginにtagsを設定します。ここで設定したtagはssk-detecthandling等で使用されます。 | - | [] |
+| config.denys | array of string | 拒否するラベルを設定します。 | true |  |
+| config.allows | array of string | 許可するラベルを定義します。許可するもの以外を検知対象とする意味。 | true |  |
+| config.params[].in | string |  適用する項目を次のうちから設定します。[ “param_req_body”, "req_body"] | true |  |
+| config.params[].key | string | 適用するkeyを設定します。 | true |  |
+
 
 ---
 
